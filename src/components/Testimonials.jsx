@@ -49,17 +49,13 @@ function Testimonials({ className = "pt-0" }) {
 
     setDirection(nextDirection);
     setActive(index);
-    setPhase('leaving');
+    setPhase('switching');
 
     timerRef.current = setTimeout(() => {
       setDisplayed(index);
-      setPhase('entering');
-
-      timerRef.current = setTimeout(() => {
-        setVideoFrom(index);
-        setPhase('idle');
-      }, 420);
-    }, 280);
+      setVideoFrom(index);
+      setPhase('idle');
+    }, 700);
   };
 
   const prev = () => {
@@ -76,8 +72,8 @@ function Testimonials({ className = "pt-0" }) {
   };
 
   const t = TESTIMONIALS[displayed];
-  const transitionClass = phase === 'idle' ? 'is-stable' : phase === 'leaving' ? 'is-leaving' : 'is-entering';
   const isSwitching = phase !== 'idle';
+  const slideDirection = direction < 0 ? 'from-left' : 'from-right';
 
   return (
     <div className={`section-testimonials flat-spacing ${className}`} ref={sectionRef}>
@@ -100,33 +96,11 @@ function Testimonials({ className = "pt-0" }) {
               </div>
 
               <div className="swiper-testimonial_wrap">
-                <div
-                  key={displayed}
-                  className={`testimonial-copy-slide ${transitionClass} ${direction < 0 ? 'from-left' : 'from-right'}`}
-                >
-                  {/* Icon */}
-                  <div className="top-icon d-flex gap-4">
-                    {t.type === 'stars' ? (
-                      [...Array(5)].map((_, i) => (
-                        <i key={i} className="icon icon-star-solid"></i>
-                      ))
-                    ) : (
-                      <QuoteIcon />
-                    )}
-                  </div>
-
-                  {/* Quote text */}
-                  <div className="text-body-1 text-white desc" style={{ margin: '16px 0' }}>
-                    {t.text}
-                  </div>
-
-                  {/* Cite */}
-                  <div className="cite">
-                    <img loading="lazy" className="line-left" src="/assets/images/item/line-1.webp" alt="" />
-                    <div className="name text-body-3 text-neutral-400 fw-semibold">{t.name}</div>
-                    <div className="line"></div>
-                    <div className="sub text-body-3 text-neutral-400">{t.role}</div>
-                  </div>
+                <div className="testimonial-copy-viewport">
+                  <TestimonialCopy testimonial={t} className={isSwitching ? `is-exiting ${slideDirection}` : ''} />
+                  {isSwitching && (
+                    <TestimonialCopy testimonial={TESTIMONIALS[active]} className={`is-entering ${slideDirection}`} />
+                  )}
                 </div>
 
                 {/* Nav + dots */}
@@ -163,25 +137,21 @@ function Testimonials({ className = "pt-0" }) {
           <div className="col-lg-6">
             <div className="effectFade fadeUp">
               <div className="testimonial-image">
-                {TESTIMONIALS.map((item, index) => (
-                  <video
-                    key={item.name}
-                    className={`testimonial-video-slide ${index === videoFrom ? 'is-current' : ''} ${isSwitching && index === active ? 'is-revealing' : ''}`}
-                    src={item.video}
-                    loop
-                    controls={index === videoFrom && !isSwitching || index === active && !isSwitching}
-                    playsInline
-                    preload="metadata"
-                    style={{ objectPosition: item.imgPosition || 'center center' }}
-                    aria-hidden={index !== active}
-                  />
-                ))}
-                {isSwitching && (
-                  <div className="testimonial-reveal-edges" aria-hidden="true">
-                    <span className="testimonial-reveal-edge is-top" />
-                    <span className="testimonial-reveal-edge is-bottom" />
-                  </div>
-                )}
+                <div className="testimonial-video-frame">
+                  {TESTIMONIALS.map((item, index) => (
+                    <video
+                      key={item.name}
+                      className={`testimonial-video-slide ${index === videoFrom ? 'is-current' : ''} ${isSwitching && index === active ? 'is-fading-in' : ''}`}
+                      src={item.video}
+                      loop
+                      controls={index === videoFrom && !isSwitching}
+                      playsInline
+                      preload="metadata"
+                      style={{ objectPosition: item.imgPosition || 'center center' }}
+                      aria-hidden={index !== active}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -190,32 +160,17 @@ function Testimonials({ className = "pt-0" }) {
       </div>
       <style>{`
         .testimonial-image {
+          width: 100%;
+        }
+
+        .testimonial-video-frame {
           overflow: hidden;
           width: 100%;
           aspect-ratio: 4 / 5;
           position: relative;
-          border-radius: 18px;
-          clip-path: inset(0 round 18px);
+          border-radius: 24px;
+          border: 1px solid rgba(255, 255, 255, 0.25);
           background: #111111;
-        }
-
-        .testimonial-reveal-edge {
-          position: absolute;
-          left: 0;
-          right: 0;
-          top: 50%;
-          height: 1px;
-          z-index: 3;
-          background: rgba(10, 249, 207, 0.85);
-          pointer-events: none;
-        }
-
-        .testimonial-reveal-edge.is-top {
-          animation: testimonialEdgeTop 0.7s ease-in-out both;
-        }
-
-        .testimonial-reveal-edge.is-bottom {
-          animation: testimonialEdgeBottom 0.7s ease-in-out both;
         }
 
         .testimonial-video-slide {
@@ -233,92 +188,97 @@ function Testimonials({ className = "pt-0" }) {
           pointer-events: auto;
         }
 
-        .testimonial-video-slide.is-revealing {
+        .testimonial-video-slide.is-fading-in {
           z-index: 2;
           opacity: 1;
-          animation: testimonialVideoReveal 0.7s ease-in-out both;
+          animation: testimonialVideoFadeIn 0.7s ease-in-out both;
         }
 
-        .testimonial-copy-slide.from-left {
-          --testimonial-x: -26px;
+        .testimonial-copy-viewport {
+          display: grid;
+          overflow: hidden;
         }
 
-        .testimonial-copy-slide.from-right {
-          --testimonial-x: 26px;
+        .testimonial-copy-slide {
+          grid-area: 1 / 1;
+          min-width: 0;
         }
 
-        .testimonial-copy-slide.is-entering {
-          animation: testimonialCopyIn 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+        .testimonial-copy-slide.is-entering.from-right {
+          animation: testimonialCopyInFromRight 0.7s ease-in-out both;
         }
 
-        .testimonial-copy-slide.is-leaving {
-          animation: testimonialCopyOut 0.3s cubic-bezier(0.55, 0, 1, 0.45) both;
+        .testimonial-copy-slide.is-exiting.from-right {
+          animation: testimonialCopyOutToLeft 0.7s ease-in-out both;
         }
 
-        @keyframes testimonialCopyIn {
-          from {
-            opacity: 0;
-            transform: translate3d(var(--testimonial-x), 18px, 0);
-          }
-          to {
-            opacity: 1;
-            transform: translate3d(0, 0, 0);
-          }
+        .testimonial-copy-slide.is-entering.from-left {
+          animation: testimonialCopyInFromLeft 0.7s ease-in-out both;
         }
 
-        @keyframes testimonialCopyOut {
-          from {
-            opacity: 1;
-            transform: translate3d(0, 0, 0);
-          }
-          to {
-            opacity: 0;
-            transform: translate3d(calc(var(--testimonial-x) * -0.75), -18px, 0);
-          }
+        .testimonial-copy-slide.is-exiting.from-left {
+          animation: testimonialCopyOutToRight 0.7s ease-in-out both;
         }
 
-        @keyframes testimonialVideoReveal {
-          from {
-            clip-path: inset(50% 0 50% 0);
-          }
-          to {
-            clip-path: inset(0 0 0 0);
-          }
+        @keyframes testimonialCopyInFromRight {
+          from { transform: translateX(100%); }
+          to { transform: translateX(0); }
         }
 
-        @keyframes testimonialEdgeTop {
-          from {
-            top: 50%;
-            opacity: 1;
-          }
-          to {
-            top: 0;
-            opacity: 0;
-          }
+        @keyframes testimonialCopyOutToLeft {
+          from { transform: translateX(0); }
+          to { transform: translateX(-100%); }
         }
 
-        @keyframes testimonialEdgeBottom {
-          from {
-            top: 50%;
-            opacity: 1;
-          }
-          to {
-            top: 100%;
-            opacity: 0;
-          }
+        @keyframes testimonialCopyInFromLeft {
+          from { transform: translateX(-100%); }
+          to { transform: translateX(0); }
+        }
+
+        @keyframes testimonialCopyOutToRight {
+          from { transform: translateX(0); }
+          to { transform: translateX(100%); }
+        }
+
+        @keyframes testimonialVideoFadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
 
         @media (prefers-reduced-motion: reduce) {
           .testimonial-copy-slide,
-          .testimonial-video-slide,
-          .testimonial-reveal-edge {
+          .testimonial-video-slide {
             animation: none;
           }
-
-          .testimonial-video-slide.is-revealing { clip-path: none; }
-          .testimonial-reveal-edge { display: none; }
         }
       `}</style>
+    </div>
+  );
+}
+
+function TestimonialCopy({ testimonial, className = '' }) {
+  return (
+    <div className={`testimonial-copy-slide ${className}`}>
+      <div className="top-icon d-flex gap-4">
+        {testimonial.type === 'stars' ? (
+          [...Array(5)].map((_, i) => (
+            <i key={i} className="icon icon-star-solid"></i>
+          ))
+        ) : (
+          <QuoteIcon />
+        )}
+      </div>
+
+      <div className="text-body-1 text-white desc" style={{ margin: '16px 0' }}>
+        {testimonial.text}
+      </div>
+
+      <div className="cite">
+        <img loading="lazy" className="line-left" src="/assets/images/item/line-1.webp" alt="" />
+        <div className="name text-body-3 text-neutral-400 fw-semibold">{testimonial.name}</div>
+        <div className="line"></div>
+        <div className="sub text-body-3 text-neutral-400">{testimonial.role}</div>
+      </div>
     </div>
   );
 }
