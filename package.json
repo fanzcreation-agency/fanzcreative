@@ -22,7 +22,6 @@
         "eslint": "latest",
         "eslint-plugin-react-hooks": "latest",
         "eslint-plugin-react-refresh": "latest",
-        "globals": "latest",
-        "sharp": "^0.35.2"
+        "globals": "latest"
     }
 }

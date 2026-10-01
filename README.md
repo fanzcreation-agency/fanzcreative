@@ -9,4 +9,4 @@ npm install
 npm run dev
 ```
 
-The shared navbar lives in `src/components/Header.jsx`, so every page now uses the same navigation.
+The shared navbar lives in `src/components/Navbar.jsx`, so every page uses the same navigation.

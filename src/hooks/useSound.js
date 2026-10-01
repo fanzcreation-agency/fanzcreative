@@ -83,30 +83,6 @@ export function useAudioConfig() {
   return [config, updateConfig];
 }
 
-// Backward-compatible triggers for legacy component calls
-export function toggleSound() {
-  setAudioConfig({ soundEnabled: !soundEnabled });
-  return soundEnabled;
-}
-
-export function isMuted() {
-  return !soundEnabled;
-}
-
-export function useSoundState() {
-  const [muted, setMuted] = useState(!soundEnabled);
-
-  useEffect(() => {
-    const handle = (e) => {
-      setMuted(!e.detail.soundEnabled);
-    };
-    window.addEventListener('audioconfigchange', handle);
-    return () => window.removeEventListener('audioconfigchange', handle);
-  }, []);
-
-  return [muted, toggleSound];
-}
-
 // Play SFX helper with custom volume and pooling (checks master and sfx sub-switch)
 export function playSFX(filename, volume = 0.15) {
   if (!soundEnabled || !sfxEnabled) return;
@@ -202,11 +178,6 @@ export function playAboutLink() {
   playSFX('menu/aboutlink.ogg', 0.15);
 }
 
-// Sticker hovers for stack icons (legacy fallback)
-export function playSmiley() {
-  playHover();
-}
-
 /* ── Backward-compatible Aliases for Legacy Component Calls ──────────── */
 export function playPop() {
   playClick(); // Map legacy pop to click.ogg
@@ -223,4 +194,3 @@ export function playTap() {
 export function playWhoosh() {
   playSpiral(); // Map legacy mobile open to spiral.ogg
 }
-

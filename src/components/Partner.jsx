@@ -1,15 +1,9 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 
 /**
  * Partner — converted from `.section-partner` in index-v2.html
  *
- * The original uses `infiniteSlide` jQuery plugin (infinityslide.js).
- * Reproduced here with a pure-CSS infinite marquee so we don't need
- * the jQuery dependency. The CSS keyframe `marquee` is injected once
- * via a <style> tag approach using useEffect.
- *
- * If you later load infinityslide.js globally (like the other vendor
- * scripts), you can swap this back to data-clone attributes on the div.
+ * Runs a CSS marquee for the partner logos.
  */
 
 const PARTNERS = [
@@ -25,8 +19,6 @@ const PARTNERS = [
 ];
 
 function Partner() {
-  const trackRef = useRef(null);
-
   /* Inject CSS marquee keyframe once */
   useEffect(() => {
     const id = 'partner-marquee-style';
@@ -84,7 +76,7 @@ function Partner() {
                 WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%)',
                 maskImage: 'linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%)',
               }}>
-                <div className="partner-track" ref={trackRef}>
+                <div className="partner-track">
                   {items.map((src, i) => (
                     <img loading="lazy" key={i} src={src} alt="" />
                   ))}

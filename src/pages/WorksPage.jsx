@@ -6,7 +6,8 @@ import AnimatedTitleIcon from '../components/AnimatedTitleIcon';
 import Pricing from '../components/Pricing';
 import FAQs from '../components/FAQs';
 import Contact from '../components/Contact';
-import { ProjectImageLink, WORKS } from '../components/FeaturedWorks';
+import { ProjectImageLink } from '../components/FeaturedWorks';
+import { WORKS } from '../constants';
 import { SLUGS } from '../constants';
 import { playClick, playHover } from '../hooks/useSound';
 
