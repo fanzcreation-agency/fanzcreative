@@ -9,7 +9,7 @@ import CustomCursor from './CustomCursor';
 import { playSpiral } from '../hooks/useSound';
 
 const is404Page = (pathname) => {
-  const validPrefixes = ['/about', '/services', '/services-single', '/web-design', '/branding', '/motion-design', '/website-development', '/project/'];
+  const validPrefixes = ['/about', '/services', '/services-single', '/web-design', '/branding', '/motion-design', '/website-development', '/works', '/blog', '/contact', '/project/'];
   if (pathname === '/') return false;
   return !validPrefixes.some(p => pathname.startsWith(p));
 };

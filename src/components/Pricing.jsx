@@ -1,4 +1,5 @@
 import { useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { useScrollFade } from '../hooks/useScrollFade';
 import { playPop, playHover } from '../hooks/useSound';
 
@@ -13,6 +14,7 @@ function Pricing() {
       sub: 'Landing Pages & Brand Refresh',
       desc: 'Ideal for startups and small businesses looking to launch quickly with a professional and high-converting online presence.',
       features: ['Landing Pages', 'Small Business Websites', 'Brand Refresh'],
+      link: '/contact?tier=starter-projects',
       style: '',
       delay: null,
     },
@@ -22,6 +24,7 @@ function Pricing() {
       sub: 'Custom Websites & Automations',
       desc: 'Bespoke designs, e-commerce, and advanced workflow integrations to scale your brand and streamline operations.',
       features: ['Custom Websites', 'Automation Systems', 'E-Commerce'],
+      link: '/contact?tier=growth-projects',
       style: 'style-black',
       delay: '0.1',
     },
@@ -31,6 +34,7 @@ function Pricing() {
       sub: 'Bespoke Platforms & AI Workflows',
       desc: 'Advanced software systems, custom platforms, and tailor-made AI automation workflows built for large-scale operations.',
       features: ['Custom Platforms', 'AI Workflows', 'Large Scale Systems'],
+      link: '/contact?tier=enterprise-solutions',
       style: '',
       delay: '0.2',
     },
@@ -63,7 +67,7 @@ function Pricing() {
                 </div>
 
                 <div className="heading" style={{ marginTop: 24, marginBottom: 24 }}>
-                  <a href="#contact" className="tf-btn w-100 justify-content-center text-center" onClick={playPop} onMouseEnter={playHover}>Request Quote</a>
+                  <Link to={plan.link} className="tf-btn w-100 justify-content-center text-center" onClick={playPop} onMouseEnter={playHover}>Request Quote</Link>
                 </div>
 
                 <div className="line"></div>
