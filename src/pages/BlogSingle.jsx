@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useScrollFade } from '../hooks/useScrollFade';
@@ -9,7 +9,7 @@ import { playClick, playHover, playPop } from '../hooks/useSound';
 const BLOG_DATA = {
   'future-of-ui-ux': {
     title: 'The Future of UI/UX in E-Commerce',
-    date: 'Oct 15, 2026',
+    date: 'Sep 30, 2026',
     category: 'Design',
     img: '/assets/images/blog/blog_ui_ux.webp',
     content: (
@@ -63,6 +63,66 @@ const BLOG_DATA = {
         <h4 className="fw-semibold mb-16 mt-40">Performance is a Feature</h4>
         <p className="mb-24 text-secondary">
           Furthermore, performance optimization—such as aggressive caching, content delivery networks (CDNs), and optimized database queries—must be treated as a core feature, not an afterthought. A platform that is slow to load will lose users faster than any marketing campaign can acquire them. Building for scale means building for speed, reliability, and continuous iteration.
+        </p>
+      </>
+    )
+  },
+  'brand-identity-that-scales': {
+    title: 'Building a Brand Identity That Scales',
+    date: 'Aug 27, 2026',
+    category: 'Branding',
+    img: '/assets/images/blog/blog_brand_identity.webp',
+    content: (
+      <>
+        <p className="mb-24 text-secondary">
+          A brand identity has to do more than look good in a presentation. It needs to stay recognizable on a small phone screen, a product label, a social post, and a full-size website. That starts with a clear idea of what the brand stands for and what its audience should remember.
+        </p>
+        <p className="mb-24 text-secondary">
+          Build the essentials as a system: a flexible logo family, a purposeful type scale, a restrained color palette, and rules for photography and graphic elements. Test them in real situations early. A mark that works at billboard scale can disappear as a tiny avatar; a palette that looks balanced in a mockup may fail when a page needs accessible contrast.
+        </p>
+        <h4 className="fw-semibold mb-16 mt-40">Design for the Next Format</h4>
+        <p className="mb-24 text-secondary">
+          Document examples for different formats, but leave enough room for new ones. Reusable principles help a team make consistent decisions without recreating every asset from scratch. The strongest identities feel connected wherever they appear, even as campaigns, channels, and products evolve.
+        </p>
+      </>
+    )
+  },
+  'website-performance-design': {
+    title: 'Why Website Performance Is a Design Decision',
+    date: 'Aug 13, 2026',
+    category: 'Development',
+    img: '/assets/images/blog/blog_web_performance.webp',
+    content: (
+      <>
+        <p className="mb-24 text-secondary">
+          A fast website feels easier to use because visitors can act as soon as they understand the page. Performance is often treated as a final engineering task, but many of the biggest choices happen during design: the size of hero media, the number of fonts, and the complexity of animation.
+        </p>
+        <p className="mb-24 text-secondary">
+          Start with the content people came for. Give primary images an appropriate size and format, reserve space for media so the layout does not jump, and avoid loading heavy assets before they are needed. A clear visual hierarchy also reduces the temptation to add motion to every element just to create emphasis.
+        </p>
+        <h4 className="fw-semibold mb-16 mt-40">Make Speed Part of Review</h4>
+        <p className="mb-24 text-secondary">
+          Review the site on an average mobile connection, not only a fast desktop. Check when the main content becomes visible and whether buttons remain responsive while media loads. When designers and developers share these checks, speed becomes a quality of the experience rather than a last-minute fix.
+        </p>
+      </>
+    )
+  },
+  'motion-design-with-purpose': {
+    title: 'Motion Design With a Purpose',
+    date: 'Jul 30, 2026',
+    category: 'Motion',
+    img: '/assets/images/blog/blog_motion_design.webp',
+    content: (
+      <>
+        <p className="mb-24 text-secondary">
+          Good motion answers a question. It shows what changed, where an item went, or what the user can do next. When animation exists only to attract attention, it can compete with the content and make familiar actions feel slower.
+        </p>
+        <p className="mb-24 text-secondary">
+          Use transitions to connect states: a menu can reveal its relationship to the button that opened it, and a gallery can show the direction of travel. Keep timing consistent across similar interactions so the interface develops a rhythm. Small feedback, such as a clear hover or pressed state, often does more work than a large entrance animation.
+        </p>
+        <h4 className="fw-semibold mb-16 mt-40">Design for Control</h4>
+        <p className="mb-24 text-secondary">
+          Motion should never block reading or clicking. Test it with a keyboard, on smaller screens, and with reduced-motion settings enabled. A purposeful animation makes the interface easier to understand while keeping the user in charge of the pace.
         </p>
       </>
     )

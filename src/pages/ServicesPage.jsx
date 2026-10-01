@@ -79,7 +79,7 @@ function ServicesPage() {
               <br />
               <div className="title2 d-flex gap-20 justify-content-center flex-wrap align-items-center">
                 <span className="fw-semibold" style={{ color: '#ffffff' }}>Creative Services</span>
-                <AnimatedTitleIcon style={{ transform: 'translateY(16px)' }} />
+                <AnimatedTitleIcon />
               </div>
             </div>
             <p className="text effectFade fadeUp" style={{ color: '#ffffff' }}>

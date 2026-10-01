@@ -54,7 +54,7 @@ function ContactPage() {
             <div className="title text-display-2 effectFade fadeRotateX">
               <span className="title1 fw-semibold text-gradient-1">Let’s Build Intelligent</span>
               <br />
-              <div className="title2 d-flex gap-20 justify-content-center flex-wrap">
+              <div className="title2 d-flex gap-20 justify-content-center flex-wrap align-items-center">
                 <span className="fw-semibold text-gradient-1">Things</span>
                 <AnimatedTitleIcon />
               </div>

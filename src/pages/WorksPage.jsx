@@ -1,25 +1,19 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useScrollFade } from '../hooks/useScrollFade';
 import AnimatedTitleIcon from '../components/AnimatedTitleIcon';
 import Pricing from '../components/Pricing';
 import FAQs from '../components/FAQs';
 import Contact from '../components/Contact';
-import { MouseFollowImage, WORKS } from '../components/FeaturedWorks';
+import { ProjectImageLink, WORKS } from '../components/FeaturedWorks';
 import { SLUGS } from '../constants';
 import { playClick, playHover } from '../hooks/useSound';
 
 function WorksPage() {
   const pageRef = useRef(null);
-  const navigate = useNavigate();
   useScrollFade(pageRef);
   const [layoutMode, setLayoutMode] = useState('single');
-
-  useEffect(() => {
-    // If we want the hover effect, we can just use MouseFollowImage component for images
-    // I will replace standard image with MouseFollowImage.
-  }, []);
 
   return (
     <div ref={pageRef} className="works-page-wrapper">
@@ -38,7 +32,7 @@ function WorksPage() {
               <br />
               <div className="title2 d-flex gap-20 justify-content-center flex-wrap align-items-center">
                 <span className="fw-semibold text-gradient-1">AI Work</span>
-                <AnimatedTitleIcon style={{ transform: 'translateY(16px)' }} />
+                <AnimatedTitleIcon />
               </div>
             </div>
             <p className="text effectFade fadeUp">
@@ -107,15 +101,10 @@ function WorksPage() {
 
               return (
                 <div key={i} className={`featured-works-item${i === 0 ? ' effectFade fadeUp no-div' : ''}`}>
-                  <MouseFollowImage 
+                  <ProjectImageLink
                     src={work.img} 
                     alt={work.title.replace('\n', ' ')}
-                    href={`/project/${SLUGS[i]}`}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      playClick();
-                      navigate(`/project/${SLUGS[i]}`);
-                    }}
+                    to={`/project/${SLUGS[i]}`}
                   />
                   <div className="content">
                     <div className="pagi-dot">
@@ -125,7 +114,9 @@ function WorksPage() {
                     </div>
                     <div className="bot">
                       <h4 className="heading fw-semibold">
-                        {titleLines[0]} {titleLines[1] && <><br /> {titleLines[1]}</>}
+                        <Link to={`/project/${SLUGS[i]}`} onClick={playClick} onMouseEnter={playHover}>
+                          {titleLines[0]} {titleLines[1] && <><br /> {titleLines[1]}</>}
+                        </Link>
                       </h4>
                       <div className="grid-text">
                         <div className="item">

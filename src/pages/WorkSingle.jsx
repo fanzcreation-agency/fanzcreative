@@ -1,11 +1,10 @@
-import { useRef, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useRef } from 'react';
+import { Link, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useScrollFade } from '../hooks/useScrollFade';
 import Testimonials from '../components/Testimonials';
-import Contact from '../components/Contact';
 import AnimatedTitleIcon from '../components/AnimatedTitleIcon';
-import { MouseFollowImage } from '../components/FeaturedWorks';
+import { ProjectImageLink } from '../components/FeaturedWorks';
 import { playClick, playHover, playPop } from '../hooks/useSound';
 import { SLUGS } from '../constants';
 
@@ -102,7 +101,6 @@ const PROJECT_DATA = [
 
 function WorkSingle() {
   const { slug } = useParams();
-  const navigate = useNavigate();
   const projectIndex = SLUGS.indexOf(slug);
   const rootRef = useRef(null);
   useScrollFade(rootRef);
@@ -117,9 +115,8 @@ function WorkSingle() {
         <meta name="description" content={`${project.title} ${project.title2} — project by FanzCreative.`} />
       </Helmet>
       {/* Hero Banner */}
-      <div className="section-hero v2" style={{ position: 'relative' }}>
+      <div className="section-hero v2 project-hero" style={{ position: 'relative' }}>
         <div className="hero-image" style={{ position: 'absolute', inset: 0, zIndex: 0 }}></div>
-        <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0, 0, 0, 0.45)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', zIndex: 1, pointerEvents: 'none' }}></div>
         <div className="container" style={{ position: 'relative', zIndex: 2 }}>
           <div className="content-wrap text-center">
             <div className="title text-display-2 effectFade fadeRotateX" key={currentIndex}>
@@ -127,7 +124,7 @@ function WorkSingle() {
               <br />
               <div className="title2 d-flex gap-20 justify-content-center flex-wrap align-items-center">
                 <span className="fw-semibold text-gradient-1">{project.title2}</span>
-                <AnimatedTitleIcon style={{ transform: 'translateY(16px)' }} />
+                <AnimatedTitleIcon />
               </div>
             </div>
             <p className="text text-body-3 effectFade fadeUp">
@@ -243,14 +240,10 @@ function WorkSingle() {
           <div className="featured-works-list position-relative">
             <div className="element effectFade fadeUp" key={`next-card-${currentIndex}`}>
               <div className="featured-works-item" onMouseEnter={playHover}>
-                <MouseFollowImage
+                <ProjectImageLink
                   src={project.nextProjectImage}
                   alt={project.nextProjectTitle}
-                  href={`/project/${SLUGS[project.nextProjectIndex]}`}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    navigate(`/project/${SLUGS[project.nextProjectIndex]}`);
-                  }}
+                  to={`/project/${SLUGS[project.nextProjectIndex]}`}
                 />
                 <div className="content">
                   <div className="pagi-dot">
@@ -260,7 +253,9 @@ function WorkSingle() {
                   </div>
                   <div className="bot">
                     <h4 className="heading fw-semibold">
-                      {project.nextProjectTitle.split(' ')[0]} <br /> {project.nextProjectTitle.split(' ').slice(1).join(' ')}
+                      <Link to={`/project/${SLUGS[project.nextProjectIndex]}`} onClick={playClick} onMouseEnter={playHover}>
+                        {project.nextProjectTitle.split(' ')[0]} <br /> {project.nextProjectTitle.split(' ').slice(1).join(' ')}
+                      </Link>
                     </h4>
                     <div className="grid-text">
                       <div className="item">
@@ -285,6 +280,13 @@ function WorkSingle() {
       </div>
 
       <style>{`
+        .service-single-page-wrapper .project-hero,
+        .service-single-page-wrapper .project-hero .hero-image {
+          background-color: var(--body);
+        }
+        .service-single-page-wrapper .project-hero .hero-image {
+          background-image: none;
+        }
         .section-hero.v2 .content-wrap .title-icon {
           position: relative;
           z-index: 1;

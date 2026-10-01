@@ -1,86 +1,20 @@
-import { useLayoutEffect, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLayoutEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { useScrollFade } from '../hooks/useScrollFade';
 import { playList, playHover } from '../hooks/useSound';
 import { SLUGS } from '../constants';
 
-/* ── Cursor-follow image wrapper ───────────────────────────────────────
-   Reproduces jQuery mouseHover() from main.js.
-   The "View Project" button smoothly follows the cursor inside the image.
-─────────────────────────────────────────────────────────────────────── */
-export function MouseFollowImage({ src, alt, onClick, href = "#" }) {
-  const wrapRef = useRef(null);
-  const buttonRef = useRef(null);
-
-  useEffect(() => {
-    const wrap = wrapRef.current;
-    const button = buttonRef.current;
-    if (!wrap || !button) return;
-
-    // Center button initially without showing it
-    button.style.left = `50%`;
-    button.style.top = `50%`;
-
-    const onMove = (e) => {
-      const rect = wrap.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-
-      button.style.left = `${x}px`;
-      button.style.top = `${y}px`;
-    };
-
-    const onEnter = () => {
-      button.style.scale = '1';
-    };
-
-    const onLeave = () => {
-      button.style.scale = '0';
-    };
-
-    wrap.addEventListener('mousemove', onMove);
-    wrap.addEventListener('mouseenter', onEnter);
-    wrap.addEventListener('mouseleave', onLeave);
-
-    return () => {
-      wrap.removeEventListener('mousemove', onMove);
-      wrap.removeEventListener('mouseenter', onEnter);
-      wrap.removeEventListener('mouseleave', onLeave);
-    };
-  }, []);
-
+export function ProjectImageLink({ src, alt, to }) {
   return (
-    <div
-      ref={wrapRef}
-      className="image main-mouse-hover"
-      style={{ position: 'relative', overflow: 'hidden', cursor: 'pointer' }}
-      onClick={onClick}
+    <Link
+      to={to}
+      className="image"
+      aria-label={`View ${alt} project`}
+      onClick={playList}
+      onMouseEnter={playHover}
     >
-      <img loading="lazy" src={src} alt={alt} style={{ pointerEvents: 'none' }} />
-      {/* Button follows cursor */}
-      <a
-        ref={buttonRef}
-        href={href}
-        onClick={(e) => {
-          if (onClick) {
-            e.preventDefault();
-            onClick(e);
-          }
-        }}
-        className="tf-mouse view-project h6"
-        style={{
-          position: 'absolute',
-          transform: 'translate(-50%, -50%)',
-          scale: '0',
-          transition: 'scale 0.3s ease-in-out',
-          pointerEvents: 'none',
-          zIndex: 9999
-        }}
-      >
-        View Project
-        <i className="icon icon-arrow-top-right"></i>
-      </a>
-    </div>
+      <img loading="lazy" src={src} alt={alt} />
+    </Link>
   );
 }
 
@@ -89,8 +23,7 @@ export function MouseFollowImage({ src, alt, onClick, href = "#" }) {
  *
  * Keeps the existing card UI exactly the same, but changes the scroll behavior:
  * - The section pins when it reaches the viewport.
- * - Project cards stack on top of each other while scrolling.
- * - Previous cards stay visible behind the active card with slight scale/offset.
+ * - Project cards replace each other while scrolling.
  * - After the last card is shown, the section releases and the next section continues.
  */
 
@@ -130,7 +63,6 @@ export const WORKS = [
 ];
 
 function FeaturedWorks() {
-  const navigate = useNavigate();
   const sectionRef = useRef(null);
   const pinRef = useRef(null);
   const cardsRef = useRef([]);
@@ -163,10 +95,7 @@ function FeaturedWorks() {
           return;
         }
 
-        const activeCardOffset = 78;
-        const stackPeek = 22;
-
-        // Initial stack state: first card is the fixed top limit, all next cards wait below.
+        // Cards share one position so completed transitions show only the active project.
         gsap.set(cards, {
           position: 'absolute',
           inset: 0,
@@ -178,9 +107,7 @@ function FeaturedWorks() {
           gsap.set(card, {
             zIndex: index + 1,
             yPercent: index === 0 ? 0 : 115,
-            y: index === 0 ? 0 : 0,
-            scale: 1,
-            opacity: 1,
+            autoAlpha: index === 0 ? 1 : 0,
           });
         });
 
@@ -208,33 +135,16 @@ function FeaturedWorks() {
         for (let i = 1; i < cards.length; i += 1) {
           const step = i - 1;
 
-          // Previous cards form the background stack, but the first card never moves above its start.
-          for (let j = 0; j < i; j += 1) {
-            const distanceFromActive = i - j;
-            timeline.to(
-              cards[j],
-              {
-                y: j === 0 ? 0 : Math.min(activeCardOffset - stackPeek * distanceFromActive, activeCardOffset - stackPeek),
-                scale: Math.max(0.88, 1 - 0.045 * distanceFromActive),
-                opacity: Math.max(0.48, 1 - 0.16 * distanceFromActive),
-                duration: 1,
-              },
-              step
-            );
-          }
-
-          // New card slides up over the existing stack.
+          timeline.set(cards[i], { autoAlpha: 1 }, step);
           timeline.to(
             cards[i],
             {
               yPercent: 0,
-              y: activeCardOffset,
-              scale: 1,
-              opacity: 1,
               duration: 1,
             },
             step
           );
+          timeline.set(cards[i - 1], { autoAlpha: 0 }, step + 1);
         }
       });
 
@@ -268,14 +178,10 @@ function FeaturedWorks() {
                   }}
                 >
                   <div className={`featured-works-item${i === 0 ? ' effectFade fadeUp no-div' : ''}`} onMouseEnter={playHover}>
-                    <MouseFollowImage
+                    <ProjectImageLink
                       src={work.img}
                       alt={work.title.replace('\n', ' ')}
-                      href={`/project/${SLUGS[i]}`}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        navigate(`/project/${SLUGS[i]}`);
-                      }}
+                      to={`/project/${SLUGS[i]}`}
                     />
 
                     <div className="content">
@@ -287,7 +193,9 @@ function FeaturedWorks() {
 
                       <div className="bot">
                         <h4 className="heading fw-semibold">
-                          {titleLines[0]} <br /> {titleLines[1]}
+                          <Link to={`/project/${SLUGS[i]}`} onClick={playList} onMouseEnter={playHover}>
+                            {titleLines[0]} <br /> {titleLines[1]}
+                          </Link>
                         </h4>
                         <div className="grid-text">
                           <div className="item">
@@ -351,11 +259,6 @@ function FeaturedWorks() {
         .sticky-works-card {
           width: 100%;
           transform-origin: center top;
-          transition: transform-origin 0.4s ease;
-        }
-
-        .sticky-works-card:hover {
-          transform-origin: center bottom;
         }
 
         .sticky-works-card .featured-works-item {
@@ -398,6 +301,7 @@ function FeaturedWorks() {
             inset: auto !important;
             transform: none !important;
             opacity: 1 !important;
+            visibility: visible !important;
           }
 
           .sticky-works-card .featured-works-item {

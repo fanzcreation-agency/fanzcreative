@@ -103,6 +103,29 @@ function AboutPage() {
         .about-page-wrapper .section-hero.v1 .hero-image {
           background-image: none !important;
         }
+        .about-page-wrapper .about-values-reel {
+          border-radius: 40px 40px 0 0;
+        }
+        .about-page-wrapper .about-values-reel .section-features {
+          padding-bottom: 64px;
+        }
+        .about-page-wrapper .section-promo-reel {
+          overflow: hidden;
+        }
+        .about-page-wrapper .about-reel-team-gap {
+          height: 80px;
+        }
+        @media (max-width: 767px) {
+          .about-page-wrapper .about-values-reel {
+            border-radius: 24px 24px 0 0;
+          }
+          .about-page-wrapper .about-values-reel .section-features {
+            padding-bottom: 40px;
+          }
+          .about-page-wrapper .about-reel-team-gap {
+            height: 48px;
+          }
+        }
       `}</style>
 
       {/* 1. Hero Banner */}
@@ -211,7 +234,7 @@ function AboutPage() {
       <Partner />
 
       {/* 4. Core Values (in box-white wrapper) */}
-      <div className="box-white">
+      <div className="box-white about-values-reel">
         <div className="section-features flat-spacing">
           <div className="container">
             <div className="heading-section center mb-64">
@@ -333,30 +356,30 @@ function AboutPage() {
             </div>
           </div>
         </div>
+
+        {/* Promo Reel */}
+        <div ref={promoContainerRef} className="section-promo-reel effectFade fadeUp">
+          <video
+            ref={videoRef}
+            src="/assets/videos/promo-reel.mp4"
+            autoPlay
+            muted
+            loop
+            playsInline
+            onCanPlay={(e) => { e.target.playbackRate = 0.5; }}
+            style={{
+              width: '100%',
+              height: 'auto',
+              display: 'block',
+              transform: 'scale(0.5)',
+              transformOrigin: 'bottom center',
+              willChange: 'transform',
+            }}
+          />
+        </div>
       </div>
 
-      {/* Promo Reel (Full Width, Autoplay, Muted) */}
-      <div ref={promoContainerRef} className="section-promo-reel effectFade fadeUp" style={{ overflow: 'hidden', backgroundColor: '#fff' }}>
-        <video
-          ref={videoRef}
-          src="/assets/videos/promo-reel.mp4"
-          autoPlay
-          muted
-          loop
-          playsInline
-          onCanPlay={(e) => { e.target.playbackRate = 0.5; }}
-          style={{
-            width: '100%',
-            height: 'auto',
-            display: 'block',
-            transform: 'scale(0.5)',
-            transformOrigin: 'bottom center',
-            willChange: 'transform',
-          }}
-        />
-      </div>
-
-
+      <div className="about-reel-team-gap" aria-hidden="true" />
 
       {/* 6. Team, Statistic, Awards, Testimonials (in box-black wrapper) */}
       <div className="box-black">

@@ -30,13 +30,13 @@ function AnimatedTitleIcon({ className = '', style = {} }) {
   return (
     <div className={`title-icon animated-title-icon ${className}`} style={style}>
       <style>{`
-        .animated-title-icon {
+        .section-hero .content-wrap .title-icon.animated-title-icon {
           position: relative;
           width: 255px;
           height: 80px;
           display: inline-block;
-          vertical-align: middle;
-          margin-left: 16px;
+          flex: 0 0 255px;
+          margin: 0;
           z-index: 1;
         }
         .animated-title-icon .box {

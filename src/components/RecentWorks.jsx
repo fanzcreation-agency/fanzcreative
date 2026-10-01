@@ -42,6 +42,7 @@ function RecentWorks() {
           color: #ffffff !important;
         }
         .rw-card-wrapper {
+          display: block;
           position: relative;
           border-radius: 24px;
           overflow: hidden;
@@ -51,6 +52,8 @@ function RecentWorks() {
           flex: 0 0 calc(25% - 16px);
           transition: box-shadow 0.45s ease, border-color 0.45s ease;
           border: 1px solid rgba(255, 255, 255, 0.08);
+          color: #ffffff;
+          text-decoration: none;
         }
         @media (max-width: 1200px) {
           .rw-card-wrapper {
@@ -74,6 +77,7 @@ function RecentWorks() {
         .rw-card-wrapper:hover {
           box-shadow: 0 22px 46px -22px rgba(0, 0, 0, 0.85);
           border-color: rgba(255, 255, 255, 0.18);
+          color: #ffffff;
         }
         .rw-scroll-container.d-flex.gap-4 {
           gap: 20px !important;
@@ -111,32 +115,7 @@ function RecentWorks() {
           font-size: 18px;
           font-weight: 600;
           line-height: 1.28;
-          margin: 0 0 20px;
-        }
-        .rw-casestudy-btn {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          width: 100%;
-          padding: 14px 20px;
-          border-radius: 999px;
-          background: rgba(255, 255, 255, 0.15);
-          backdrop-filter: blur(16px);
-          -webkit-backdrop-filter: blur(16px);
-          border: 1px solid rgba(255, 255, 255, 0.3);
-          color: #ffffff;
-          font-size: 14px;
-          font-weight: 500;
-          letter-spacing: 0.01em;
-          text-decoration: none;
-          transition: all 0.3s ease;
-        }
-        .rw-card-wrapper:hover .rw-casestudy-btn {
-          background: rgba(255, 255, 255, 0.95);
-          border-color: rgba(255, 255, 255, 0.95);
-          color: #09090b;
-          box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+          margin: 0;
         }
         .rw-scroll-container::-webkit-scrollbar {
           display: none;
@@ -169,7 +148,7 @@ function RecentWorks() {
           }}
         >
           {CASE_STUDIES.map((item) => (
-            <div key={item.id} className="rw-card-wrapper" style={{ scrollSnapAlign: 'start' }}>
+            <Link key={item.id} to={item.link} className="rw-card-wrapper" style={{ scrollSnapAlign: 'start' }} onClick={playClick} onMouseEnter={playHover} aria-label={`View ${item.title} project`}>
               <img src={item.image} alt={item.title} className="rw-card-img" loading="lazy" />
               <div className="rw-card-overlay">
                 <span className="rw-card-category">
@@ -178,20 +157,8 @@ function RecentWorks() {
                 <h5 className="rw-card-title">
                   {item.title}
                 </h5>
-                <Link
-                  to={item.link}
-                  className="rw-casestudy-btn"
-                  onClick={playClick}
-                  onMouseEnter={playHover}
-                >
-                  View Casestudy
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M7 17L17 7"></path>
-                    <path d="M9 7h8v8"></path>
-                  </svg>
-                </Link>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>
