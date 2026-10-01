@@ -107,6 +107,46 @@ function Benefits() {
 
   return (
     <div className="section-benefits flat-spacing pt-0" ref={sectionRef}>
+      <style>{`
+        .section-benefits .benefits-grid-row > [class*="col-"] {
+          display: flex;
+        }
+        .section-benefits .benefits-grid-row .benefits-box,
+        .section-benefits .benefits-step-wrap {
+          width: 100%;
+        }
+        .section-benefits .benefits-grid-row .benefits-box {
+          min-height: 430px;
+        }
+        .section-benefits .benefits-step-wrap {
+          display: flex;
+          height: 100%;
+        }
+        .section-benefits .benefits-row-top {
+          align-items: stretch;
+        }
+        .section-benefits .benefits-row-top .benefits-step-wrap {
+          align-self: stretch;
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+        .section-benefits .benefits-row-top .benefits-step {
+          flex: 1;
+          height: auto;
+        }
+        @media (max-width: 991px) {
+          .section-benefits .benefits-grid-row > [class*="col-"] {
+            display: block;
+          }
+          .section-benefits .benefits-grid-row .benefits-box {
+            min-height: unset;
+          }
+          .section-benefits .benefits-step-wrap {
+            display: block;
+            height: auto;
+          }
+        }
+      `}</style>
       <div className="container">
 
         {/* Heading */}
@@ -116,7 +156,7 @@ function Benefits() {
         </div>
 
         {/* Row 1 */}
-        <div className="row mb-24">
+        <div className="row mb-24 benefits-grid-row benefits-row-top">
           {/* Progress bars box */}
           <div className="col-lg-7">
             <div className="benefits-box benefits-progress">
@@ -136,7 +176,7 @@ function Benefits() {
 
           {/* Step / checklist box */}
           <div className="col-lg-5">
-            <div className="effectFade fadeUp" style={{ padding: '30px', margin: '-30px' }}>
+            <div className="effectFade fadeUp benefits-step-wrap" style={{ padding: '30px', margin: '-30px' }}>
               <div className="benefits-box benefits-step">
                 <div className="benefits-step-inner">
                   <div className="line-step"></div>
@@ -156,7 +196,7 @@ function Benefits() {
         </div>
 
         {/* Row 2 */}
-        <div className="row">
+        <div className="row benefits-grid-row">
           <div className="col-lg-5">
             <div className="benefits-box benefits-secure">
               <div className="benefits-secure-inner text-center">
