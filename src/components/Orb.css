@@ -1,0 +1,21 @@
+.orb-container {
+  position: relative;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Glassmorphic contact input overrides */
+.form-contact input::placeholder,
+.form-contact textarea::placeholder {
+  color: rgba(255, 255, 255, 0.4) !important;
+}
+
+.form-contact input:focus,
+.form-contact textarea:focus {
+  border-bottom: 1px solid var(--brand, #0af9cf) !important;
+}
+
+.form-contact .attachment {
+  color: #ffffff !important;
+}
