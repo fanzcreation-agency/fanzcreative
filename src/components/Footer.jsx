@@ -69,7 +69,10 @@ function Footer() {
           </p>
           <a href="#" className="action-go-top d-flex gap-8 align-items-center justify-content-end link1" aria-label="Scroll to top" onClick={playTick} onMouseEnter={playHover}>
             <span className="fw-semibold">Back to top</span>
-            <i className="icon icon-long-arrow-alt-up-solid fs-20"></i>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M12 19V5"></path>
+              <path d="M5 12l7-7 7 7"></path>
+            </svg>
           </a>
         </div>
       </div>

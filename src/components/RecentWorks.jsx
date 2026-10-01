@@ -185,7 +185,11 @@ function RecentWorks() {
                   onClick={playClick}
                   onMouseEnter={playHover}
                 >
-                  View Casestudy <span style={{ fontSize: '14px' }}>↗</span>
+                  View Casestudy
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M7 17L17 7"></path>
+                    <path d="M9 7h8v8"></path>
+                  </svg>
                 </Link>
               </div>
             </div>
