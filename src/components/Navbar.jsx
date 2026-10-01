@@ -128,19 +128,11 @@ function Navbar({ is404 = false, currentPage = 'home' }) {
           color: #0af9cf !important;
         }
         .tf-header .header-inner .start-project-btn {
-          background: #ffffff !important;
-          color: #000000 !important;
-          border: 1px solid #ffffff !important;
-          border-radius: 999px !important;
-          font-weight: 700 !important;
-          transition: all 0.3s ease !important;
-        }
-        .tf-header .header-inner .start-project-btn:hover {
-          background: linear-gradient(135deg, #0af9cf 0%, #7ef716 100%) !important;
-          color: #000000 !important;
-          border-color: #0af9cf !important;
-          box-shadow: 0 4px 15px rgba(10, 249, 207, 0.4) !important;
-          transform: translateY(-1px);
+          min-height: 46px;
+          padding: 11px 22px;
+          color: var(--white) !important;
+          font-weight: 600 !important;
+          white-space: nowrap;
         }
       `}</style>
       <div className="header-inner">
