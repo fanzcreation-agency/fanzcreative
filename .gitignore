@@ -39,6 +39,10 @@ dist/
 dist-ssr/
 *.local
 
+# Media is delivered from Cloudinary; retain local copies without committing them.
+public/assets/images/
+public/assets/videos/
+
 # Temporary / Scratch / Test files
 test.html
 *.tmp

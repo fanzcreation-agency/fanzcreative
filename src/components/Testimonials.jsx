@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useScrollFade } from '../hooks/useScrollFade';
 import { playList, playHover } from '../hooks/useSound';
+import { videoMedia } from '../media';
 
 const TESTIMONIALS = [
   {
@@ -8,7 +9,8 @@ const TESTIMONIALS = [
     text: '"Working with FanzCreative was a fantastic experience. He built a beautiful, functional website for our homeopathic practice that perfectly matched the brief. Communication was smooth and clear throughout the entire process. Fanz was always responsible, reliable, and very easy to work with. What really stood out was the top-notch quality for a very reasonable price. The final result exceeded our expectations."',
     name: 'Mariana Brighty',
     role: 'Founder, Homeolistics',
-    video: '/assets/videos/mariana.webm',
+    video: videoMedia.mariana.url,
+    poster: videoMedia.mariana.poster,
     imgPosition: 'center 10%'
   },
   {
@@ -16,7 +18,8 @@ const TESTIMONIALS = [
     text: '"My company builds custom data platforms for marketing teams and agencies. We went to FanzCreative to refresh our brand and image, and we couldn\'t be happier. The logo he created for us perfectly captures our identity. The process was smooth and collaborative. I highly recommend FanzCreative to anyone who\'s just looking for a talented logo and designer."',
     name: 'Gideon Fernandez',
     role: 'Founder, Custom Data Platforms',
-    video: '/assets/videos/gideon.webm',
+    video: videoMedia.gideon.url,
+    poster: videoMedia.gideon.poster,
     imgPosition: 'center 15%'
   },
   {
@@ -24,7 +27,8 @@ const TESTIMONIALS = [
     text: '"We have a company called House of Korea where we sell Korean skincare and beauty products. We reached out to FanzCreative to look at building a website for us, and it was a very collaborative approach. He was very patient with the changes that we required. We ended up with a really amazing website; he got my brief spot on. I would highly recommend his services."',
     name: 'Nadia',
     role: 'Founder, House of Korea',
-    video: '/assets/videos/nadia.webm',
+    video: videoMedia.nadia.url,
+    poster: videoMedia.nadia.poster,
     imgPosition: 'center 15%'
   },
 ];
@@ -38,6 +42,7 @@ function Testimonials({ className = "pt-0" }) {
   const [direction, setDirection] = useState(1);
   const [phase, setPhase] = useState('idle');
   const timerRef = useRef(null);
+  const videoRefs = useRef([]);
 
   useEffect(() => () => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -46,6 +51,7 @@ function Testimonials({ className = "pt-0" }) {
   const changeTo = (index, nextDirection) => {
     if (index === active || phase !== 'idle') return;
     if (timerRef.current) clearTimeout(timerRef.current);
+    videoRefs.current[videoFrom]?.pause();
 
     setDirection(nextDirection);
     setActive(index);
@@ -141,12 +147,14 @@ function Testimonials({ className = "pt-0" }) {
                   {TESTIMONIALS.map((item, index) => (
                     <video
                       key={item.name}
+                      ref={(element) => { videoRefs.current[index] = element; }}
                       className={`testimonial-video-slide ${index === videoFrom ? 'is-current' : ''} ${isSwitching && index === active ? 'is-fading-in' : ''}`}
-                      src={item.video}
+                      src={index === videoFrom ? item.video : undefined}
+                      poster={item.poster}
                       loop
                       controls={index === videoFrom && !isSwitching}
                       playsInline
-                      preload="metadata"
+                      preload="none"
                       style={{ objectPosition: item.imgPosition || 'center center' }}
                       aria-hidden={index !== active}
                     />

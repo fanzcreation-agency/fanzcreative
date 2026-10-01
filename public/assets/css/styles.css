@@ -4023,7 +4023,7 @@ header.header-sticky {
 
 .offcanvas-backdrop {
   z-index: 2999;
-  cursor: url(../images/cursor-close.svg), auto;
+  cursor: default;
 }
 
 .overflow-x-auto::-webkit-scrollbar,
@@ -4032,7 +4032,7 @@ header.header-sticky {
 }
 
 .modal {
-  cursor: url(../images/cursor-close.svg), auto;
+  cursor: default;
 }
 
 .modal .icon-close-popup {

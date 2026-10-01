@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { mediaUrl } from '../media';
 
 function AnimatedTitleIcon({ className = '', style = {} }) {
   const [fallingCards, setFallingCards] = useState([]);
@@ -106,7 +107,7 @@ function AnimatedTitleIcon({ className = '', style = {} }) {
               }}
             >
               <img loading="lazy"
-                src={imgSrc}
+                src={mediaUrl(imgSrc)}
                 alt=""
                 style={{
                   transform: `rotate(${card.rotate}deg) scale(${card.scale})`,

@@ -11,6 +11,7 @@ import FAQs from '../components/FAQs';
 import Contact from '../components/Contact';
 import { playPop, playHover, playClick } from '../hooks/useSound';
 import AnimatedTitleIcon from '../components/AnimatedTitleIcon';
+import { videoMedia } from '../media';
 
 function AboutPage() {
   const pageRef = useRef(null);
@@ -363,8 +364,11 @@ function AboutPage() {
         <div ref={promoContainerRef} className="section-promo-reel effectFade fadeUp">
           <video
             ref={videoRef}
-            src="/assets/videos/promo-reel.mp4"
-            autoPlay
+            width="960"
+            height="540"
+            src={videoMedia.promo.url}
+            poster={videoMedia.promo.poster}
+            preload="none"
             muted
             loop
             playsInline

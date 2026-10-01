@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { playHover, playTick } from '../hooks/useSound';
 import { useScrollFade } from '../hooks/useScrollFade';
-import { useVisibleVideo } from '../hooks/useVisibleVideo';
+import { videoMedia } from '../media';
 
 /* ─────────────────────────────────────────────────────────────────────
    VideoModal — animated open/close
@@ -118,7 +118,8 @@ function VideoModal({ onClose }) {
           <button className="vm-close-btn" onClick={handleClose} aria-label="Close video">✕</button>
           <video
             className="vm-video"
-            src="/assets/videos/promo-reel.mp4"
+            src={videoMedia.promo.url}
+            poster={videoMedia.promo.poster}
             autoPlay
             controls
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
@@ -141,11 +142,9 @@ function VideoModal({ onClose }) {
  */
 function Hero() {
   const sectionRef = useRef(null);
-  const previewVideoRef = useRef(null);
   const [stage, setStage] = useState(0); // 0: loading sweep, 1: morphing to position, 2: active
   const [videoModalOpen, setVideoModalOpen] = useState(false);
   useScrollFade(sectionRef);
-  useVisibleVideo(previewVideoRef);
 
   useEffect(() => {
     // Stage 0 -> Stage 1: White sweep finishes, text morphs/glides to bottom
@@ -220,14 +219,11 @@ function Hero() {
             onClick={() => setVideoModalOpen(true)}
             onMouseEnter={playHover}
           >
-            <video
-              ref={previewVideoRef}
-              src="/assets/videos/promo-reel.mp4"
-              autoPlay
-              loop
-              muted
-              playsInline
+            <img
+              src={videoMedia.promo.poster}
+              alt="FanzCreative showreel preview"
               className="palmer-video-element"
+              fetchPriority="high"
             />
             {/* Center Play Overlay Icon */}
             <div className="palmer-video-brand-icon">
