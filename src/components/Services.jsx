@@ -128,10 +128,11 @@ function Services() {
           width: 100%;
           max-width: 620px;
           height: 390px;
-          border-radius: 32px;
+          border-radius: 24px;
           overflow: hidden;
-          box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.18), 0 0 1px rgba(0, 0, 0, 0.1);
-          background-color: #1a1a1a;
+          box-shadow: 0 14px 34px rgba(0, 0, 0, 0.08);
+          border: 1px solid rgba(0, 0, 0, 0.06);
+          background-color: #f4f4f4;
           margin: 0 auto;
         }
         .framer-marquee-container {
@@ -151,7 +152,7 @@ function Services() {
         @media (max-width: 768px) {
           .framer-card-box {
             height: 250px;
-            border-radius: 20px;
+            border-radius: 18px;
           }
           .framer-tab-btn {
             font-size: 14px;
@@ -300,6 +301,7 @@ function Services() {
                 opacity: imgVisible ? 1 : 0,
                 transition: 'opacity 0.25s ease, transform 0.4s ease',
                 transform: imgVisible ? 'scale(1)' : 'scale(1.02)',
+                borderRadius: 'inherit',
               }}
             />
           </div>
