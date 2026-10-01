@@ -130,7 +130,7 @@ function Services() {
           height: 390px;
           border-radius: 24px;
           overflow: hidden;
-          box-shadow: 0 14px 34px rgba(0, 0, 0, 0.08);
+          box-shadow: 0 8px 22px rgba(0, 0, 0, 0.10);
           border: 1px solid rgba(0, 0, 0, 0.06);
           background-color: #f4f4f4;
           margin: 0 auto;

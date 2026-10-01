@@ -6,28 +6,28 @@ const CASE_STUDIES = [
     id: 'cora-beauty',
     title: 'Cora Skincare & Packaging',
     image: '/assets/images/section/cora-beauty-ecommerce-mockup.webp',
-    link: '/works',
+    link: '/project/cora-beauty-skincare',
     category: 'Packaging / Brand',
   },
   {
     id: 'marble-fashion',
     title: 'Marble Couture Editorial',
     image: '/assets/images/section/marble-fashion-ecommerce-mockup.webp',
-    link: '/works',
+    link: '/project/marble-fashion-ecommerce',
     category: 'E-Commerce / Motion',
   },
   {
     id: 'mojave-apparel',
     title: 'Mojave Outerwear Studio',
     image: '/assets/images/section/mojave-clothing-store-mockup.webp',
-    link: '/works',
+    link: '/project/mojave-clothing-store',
     category: 'Visual Identity',
   },
   {
     id: 'revolution-store',
     title: 'Revolution Digital Lab',
     image: '/assets/images/section/revolution-fashion-store-mockup.webp',
-    link: '/works',
+    link: '/project/revolution-fashion-store',
     category: 'Web App / 3D',
   },
 ];
@@ -49,7 +49,7 @@ function RecentWorks() {
           height: 380px;
           min-width: 295px;
           flex: 0 0 calc(25% - 16px);
-          transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.45s ease, border-color 0.45s ease;
+          transition: box-shadow 0.45s ease, border-color 0.45s ease;
           border: 1px solid rgba(255, 255, 255, 0.08);
         }
         @media (max-width: 1200px) {
@@ -72,7 +72,6 @@ function RecentWorks() {
           }
         }
         .rw-card-wrapper:hover {
-          transform: translateY(-8px) !important;
           box-shadow: 0 22px 46px -22px rgba(0, 0, 0, 0.85);
           border-color: rgba(255, 255, 255, 0.18);
         }

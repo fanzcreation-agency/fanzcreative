@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useScrollFade } from '../hooks/useScrollFade';
 import { playList, playHover } from '../hooks/useSound';
 
@@ -33,25 +33,51 @@ function Testimonials({ className = "pt-0" }) {
   const sectionRef = useRef(null);
   useScrollFade(sectionRef);
   const [active, setActive] = useState(0);
+  const [displayed, setDisplayed] = useState(0);
+  const [videoFrom, setVideoFrom] = useState(0);
   const [direction, setDirection] = useState(1);
+  const [phase, setPhase] = useState('idle');
+  const timerRef = useRef(null);
+
+  useEffect(() => () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+  }, []);
+
+  const changeTo = (index, nextDirection) => {
+    if (index === active || phase !== 'idle') return;
+    if (timerRef.current) clearTimeout(timerRef.current);
+
+    setDirection(nextDirection);
+    setActive(index);
+    setPhase('leaving');
+
+    timerRef.current = setTimeout(() => {
+      setDisplayed(index);
+      setPhase('entering');
+
+      timerRef.current = setTimeout(() => {
+        setVideoFrom(index);
+        setPhase('idle');
+      }, 420);
+    }, 280);
+  };
 
   const prev = () => {
-    setDirection(-1);
-    setActive((a) => (a - 1 + TESTIMONIALS.length) % TESTIMONIALS.length);
+    changeTo((active - 1 + TESTIMONIALS.length) % TESTIMONIALS.length, -1);
   };
 
   const next = () => {
-    setDirection(1);
-    setActive((a) => (a + 1) % TESTIMONIALS.length);
+    changeTo((active + 1) % TESTIMONIALS.length, 1);
   };
 
   const goTo = (index) => {
     if (index === active) return;
-    setDirection(index > active ? 1 : -1);
-    setActive(index);
+    changeTo(index, index > active ? 1 : -1);
   };
 
-  const t = TESTIMONIALS[active];
+  const t = TESTIMONIALS[displayed];
+  const transitionClass = phase === 'idle' ? 'is-stable' : phase === 'leaving' ? 'is-leaving' : 'is-entering';
+  const isSwitching = phase !== 'idle';
 
   return (
     <div className={`section-testimonials flat-spacing ${className}`} ref={sectionRef}>
@@ -75,8 +101,8 @@ function Testimonials({ className = "pt-0" }) {
 
               <div className="swiper-testimonial_wrap">
                 <div
-                  key={active}
-                  className={`testimonial-copy-slide ${direction < 0 ? 'from-left' : 'from-right'}`}
+                  key={displayed}
+                  className={`testimonial-copy-slide ${transitionClass} ${direction < 0 ? 'from-left' : 'from-right'}`}
                 >
                   {/* Icon */}
                   <div className="top-icon d-flex gap-4">
@@ -136,23 +162,26 @@ function Testimonials({ className = "pt-0" }) {
           {/* Right — photo */}
           <div className="col-lg-6">
             <div className="effectFade fadeUp">
-              <div
-                className={`testimonial-image testimonial-image-slide ${direction < 0 ? 'from-left' : 'from-right'}`}
-                key={t.name}
-              >
-                <video
-                  src={t.video}
-                  loop
-                  controls
-                  playsInline
-                  preload="metadata"
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    objectPosition: t.imgPosition || 'center center'
-                  }}
-                />
+              <div className="testimonial-image">
+                {TESTIMONIALS.map((item, index) => (
+                  <video
+                    key={item.name}
+                    className={`testimonial-video-slide ${index === videoFrom ? 'is-current' : ''} ${isSwitching && index === active ? 'is-revealing' : ''}`}
+                    src={item.video}
+                    loop
+                    controls={index === videoFrom && !isSwitching || index === active && !isSwitching}
+                    playsInline
+                    preload="metadata"
+                    style={{ objectPosition: item.imgPosition || 'center center' }}
+                    aria-hidden={index !== active}
+                  />
+                ))}
+                {isSwitching && (
+                  <div className="testimonial-reveal-edges" aria-hidden="true">
+                    <span className="testimonial-reveal-edge is-top" />
+                    <span className="testimonial-reveal-edge is-bottom" />
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -160,44 +189,76 @@ function Testimonials({ className = "pt-0" }) {
         </div>
       </div>
       <style>{`
-        .testimonial-copy-slide {
-          animation: testimonialCopyIn 0.42s ease both;
-        }
-
         .testimonial-image {
           overflow: hidden;
           width: 100%;
           aspect-ratio: 4 / 5;
           position: relative;
-          border-radius: 16px;
+          border-radius: 18px;
+          clip-path: inset(0 round 18px);
+          background: #111111;
         }
 
-        .testimonial-image-slide {
-          animation: testimonialImageIn 0.58s cubic-bezier(0.22, 1, 0.36, 1) both;
+        .testimonial-reveal-edge {
+          position: absolute;
+          left: 0;
+          right: 0;
+          top: 50%;
+          height: 1px;
+          z-index: 3;
+          background: rgba(10, 249, 207, 0.85);
+          pointer-events: none;
         }
 
-        .testimonial-image-slide img,
-        .testimonial-image-slide video {
-          animation: testimonialPhotoIn 0.72s cubic-bezier(0.22, 1, 0.36, 1) both;
-          will-change: transform, opacity;
+        .testimonial-reveal-edge.is-top {
+          animation: testimonialEdgeTop 0.7s ease-in-out both;
         }
 
-        .testimonial-copy-slide.from-left,
-        .testimonial-image-slide.from-left {
+        .testimonial-reveal-edge.is-bottom {
+          animation: testimonialEdgeBottom 0.7s ease-in-out both;
+        }
+
+        .testimonial-video-slide {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          opacity: 0;
+          pointer-events: none;
+        }
+
+        .testimonial-video-slide.is-current {
+          opacity: 1;
+          pointer-events: auto;
+        }
+
+        .testimonial-video-slide.is-revealing {
+          z-index: 2;
+          opacity: 1;
+          animation: testimonialVideoReveal 0.7s ease-in-out both;
+        }
+
+        .testimonial-copy-slide.from-left {
           --testimonial-x: -26px;
-          --testimonial-rotate: -1.4deg;
         }
 
-        .testimonial-copy-slide.from-right,
-        .testimonial-image-slide.from-right {
+        .testimonial-copy-slide.from-right {
           --testimonial-x: 26px;
-          --testimonial-rotate: 1.4deg;
+        }
+
+        .testimonial-copy-slide.is-entering {
+          animation: testimonialCopyIn 0.48s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+
+        .testimonial-copy-slide.is-leaving {
+          animation: testimonialCopyOut 0.3s cubic-bezier(0.55, 0, 1, 0.45) both;
         }
 
         @keyframes testimonialCopyIn {
           from {
             opacity: 0;
-            transform: translate3d(var(--testimonial-x), 12px, 0);
+            transform: translate3d(var(--testimonial-x), 18px, 0);
           }
           to {
             opacity: 1;
@@ -205,35 +266,57 @@ function Testimonials({ className = "pt-0" }) {
           }
         }
 
-        @keyframes testimonialImageIn {
+        @keyframes testimonialCopyOut {
           from {
-            opacity: 0;
-            transform: translate3d(var(--testimonial-x), 18px, 0) rotate(var(--testimonial-rotate));
+            opacity: 1;
+            transform: translate3d(0, 0, 0);
           }
           to {
-            opacity: 1;
-            transform: translate3d(0, 0, 0) rotate(0deg);
+            opacity: 0;
+            transform: translate3d(calc(var(--testimonial-x) * -0.75), -18px, 0);
           }
         }
 
-        @keyframes testimonialPhotoIn {
+        @keyframes testimonialVideoReveal {
           from {
-            opacity: 0.7;
-            transform: scale(1.08);
+            clip-path: inset(50% 0 50% 0);
           }
           to {
+            clip-path: inset(0 0 0 0);
+          }
+        }
+
+        @keyframes testimonialEdgeTop {
+          from {
+            top: 50%;
             opacity: 1;
-            transform: scale(1);
+          }
+          to {
+            top: 0;
+            opacity: 0;
+          }
+        }
+
+        @keyframes testimonialEdgeBottom {
+          from {
+            top: 50%;
+            opacity: 1;
+          }
+          to {
+            top: 100%;
+            opacity: 0;
           }
         }
 
         @media (prefers-reduced-motion: reduce) {
           .testimonial-copy-slide,
-          .testimonial-image-slide,
-          .testimonial-image-slide img,
-          .testimonial-image-slide video {
+          .testimonial-video-slide,
+          .testimonial-reveal-edge {
             animation: none;
           }
+
+          .testimonial-video-slide.is-revealing { clip-path: none; }
+          .testimonial-reveal-edge { display: none; }
         }
       `}</style>
     </div>

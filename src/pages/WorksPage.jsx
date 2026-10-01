@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useScrollFade } from '../hooks/useScrollFade';
 import AnimatedTitleIcon from '../components/AnimatedTitleIcon';
 import Pricing from '../components/Pricing';
@@ -12,6 +12,7 @@ import { playClick, playHover } from '../hooks/useSound';
 
 function WorksPage() {
   const pageRef = useRef(null);
+  const navigate = useNavigate();
   useScrollFade(pageRef);
   const [layoutMode, setLayoutMode] = useState('single');
 
@@ -109,7 +110,12 @@ function WorksPage() {
                   <MouseFollowImage 
                     src={work.img} 
                     alt={work.title.replace('\n', ' ')}
-                    href={`/project/${SLUGS[i]}`} 
+                    href={`/project/${SLUGS[i]}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      playClick();
+                      navigate(`/project/${SLUGS[i]}`);
+                    }}
                   />
                   <div className="content">
                     <div className="pagi-dot">

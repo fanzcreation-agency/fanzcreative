@@ -3,12 +3,10 @@ import { playHover, playTick } from '../hooks/useSound';
 import { useScrollFade } from '../hooks/useScrollFade';
 
 /* ─────────────────────────────────────────────────────────────────────
-   VideoModal — animated open/close, no download, obfuscated source
+   VideoModal — animated open/close
    ───────────────────────────────────────────────────────────────────── */
 function VideoModal({ onClose }) {
   const [phase, setPhase] = useState('entering'); // 'entering' | 'open' | 'closing'
-  const videoRef = useRef(null);
-  const blobUrlRef = useRef(null);
 
   // Animate in
   useEffect(() => {
@@ -16,37 +14,6 @@ function VideoModal({ onClose }) {
       requestAnimationFrame(() => setPhase('open'));
     });
     return () => cancelAnimationFrame(t);
-  }, []);
-
-  // Load video as Blob so the real URL never appears in the Network/Sources DevTools tabs
-  useEffect(() => {
-    let cancelled = false;
-    fetch('/assets/videos/promo-reel.mp4')
-      .then((r) => r.blob())
-      .then((blob) => {
-        if (cancelled) return;
-        const url = URL.createObjectURL(blob);
-        blobUrlRef.current = url;
-        if (videoRef.current) {
-          videoRef.current.src = url;
-          videoRef.current.play().catch(() => {});
-        }
-      })
-      .catch(() => {
-        // Fallback: still play directly (blob failed e.g. CORS)
-        if (videoRef.current && !cancelled) {
-          videoRef.current.src = '/assets/videos/promo-reel.mp4';
-          videoRef.current.play().catch(() => {});
-        }
-      });
-
-    return () => {
-      cancelled = true;
-      if (blobUrlRef.current) {
-        URL.revokeObjectURL(blobUrlRef.current);
-        blobUrlRef.current = null;
-      }
-    };
   }, []);
 
   // Trigger close: animate out, then unmount
@@ -139,7 +106,6 @@ function VideoModal({ onClose }) {
           border-color: #ffffff;
           color: #000000;
         }
-        /* Prevent any native video context menu options */
         .vm-video { pointer-events: auto; }
       `}</style>
 
@@ -150,13 +116,10 @@ function VideoModal({ onClose }) {
         <div className={`vm-content${isOpen ? ' open' : ''}${isClosing ? ' closing' : ''}`}>
           <button className="vm-close-btn" onClick={handleClose} aria-label="Close video">✕</button>
           <video
-            ref={videoRef}
             className="vm-video"
+            src="/assets/videos/promo-reel.mp4"
             autoPlay
             controls
-            controlsList="nodownload noremoteplayback"
-            disablePictureInPicture
-            onContextMenu={(e) => e.preventDefault()}
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
         </div>
@@ -264,8 +227,8 @@ function Hero() {
             />
             {/* Center Play Overlay Icon */}
             <div className="palmer-video-brand-icon">
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M8 5v14l11-7z" />
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M8.5 5.5v13l10-6.5-10-6.5z" />
               </svg>
             </div>
           </div>
@@ -537,6 +500,7 @@ function Hero() {
           margin-left: 2px;
           position: relative;
           z-index: 1;
+          fill: none;
         }
 
         .palmer-video-card:hover .palmer-video-brand-icon {
@@ -690,5 +654,3 @@ function Hero() {
 }
 
 export default Hero;
-
-
