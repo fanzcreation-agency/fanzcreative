@@ -88,6 +88,11 @@ function RecentWorks() {
           object-fit: cover;
           transition: transform 0.75s cubic-bezier(0.16, 1, 0.3, 1), filter 0.75s cubic-bezier(0.16, 1, 0.3, 1);
         }
+        .rw-card-image-link {
+          display: block;
+          width: 100%;
+          height: 100%;
+        }
         .rw-card-wrapper:hover .rw-card-img {
           transform: scale(1.045);
           filter: saturate(1.05) contrast(1.04);
@@ -101,6 +106,10 @@ function RecentWorks() {
           justify-content: flex-end;
           padding: 24px;
           z-index: 2;
+          pointer-events: none;
+        }
+        .rw-card-overlay a {
+          pointer-events: auto;
         }
         .rw-card-category {
           color: rgba(255, 255, 255, 0.68);
@@ -115,7 +124,37 @@ function RecentWorks() {
           font-size: 18px;
           font-weight: 600;
           line-height: 1.28;
-          margin: 0;
+          margin: 0 0 16px;
+        }
+        .rw-card-title a {
+          color: inherit;
+          text-decoration: none;
+        }
+        .rw-casestudy-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          width: 100%;
+          padding: 14px 20px;
+          border-radius: 999px;
+          background: rgba(255, 255, 255, 0.15);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          border: 1px solid rgba(255, 255, 255, 0.3);
+          color: #ffffff;
+          font-size: 14px;
+          font-weight: 500;
+          letter-spacing: 0.01em;
+          text-decoration: none;
+          transition: all 0.3s ease;
+        }
+        .rw-card-wrapper:hover .rw-casestudy-btn,
+        .rw-casestudy-btn:focus-visible {
+          background: #0af9cf;
+          border-color: #0af9cf;
+          box-shadow: 0 6px 20px rgba(10, 249, 207, 0.45);
+          color: #ffffff;
         }
         .rw-scroll-container::-webkit-scrollbar {
           display: none;
@@ -148,17 +187,22 @@ function RecentWorks() {
           }}
         >
           {CASE_STUDIES.map((item) => (
-            <Link key={item.id} to={item.link} className="rw-card-wrapper" style={{ scrollSnapAlign: 'start' }} onClick={playClick} onMouseEnter={playHover} aria-label={`View ${item.title} project`}>
-              <img src={item.image} alt={item.title} className="rw-card-img" loading="lazy" />
+            <div key={item.id} className="rw-card-wrapper" style={{ scrollSnapAlign: 'start' }} onMouseEnter={playHover}>
+              <Link to={item.link} className="rw-card-image-link" onClick={playClick} aria-label={`View ${item.title} project`}>
+                <img src={item.image} alt={item.title} className="rw-card-img" loading="lazy" />
+              </Link>
               <div className="rw-card-overlay">
                 <span className="rw-card-category">
                   {item.category}
                 </span>
                 <h5 className="rw-card-title">
-                  {item.title}
+                  <Link to={item.link} onClick={playClick}>{item.title}</Link>
                 </h5>
+                <Link to={item.link} className="rw-casestudy-btn" onClick={playClick}>
+                  View Casestudy <span style={{ fontSize: '14px' }}>↗</span>
+                </Link>
               </div>
-            </Link>
+            </div>
           ))}
         </div>
       </div>
