@@ -14,6 +14,46 @@ function Awards() {
 
   return (
     <div className="section-awards flat-spacing" ref={sectionRef}>
+      <style>{`
+        .section-awards .awards-item {
+          align-items: stretch;
+        }
+        .section-awards .awards-item .image {
+          flex: 0 0 104px;
+          width: 104px;
+          display: flex;
+          align-items: center;
+          justify-content: flex-start;
+        }
+        .section-awards .award-row-icon {
+          width: 38px;
+          height: 38px;
+          border-radius: 50%;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          color: rgba(255, 255, 255, 0.82);
+          background: rgba(255, 255, 255, 0.035);
+          border: 1px solid rgba(255, 255, 255, 0.14);
+          transition: border-color 0.3s ease, color 0.3s ease, background-color 0.3s ease;
+        }
+        .section-awards .award-row-icon svg {
+          width: 19px;
+          height: 19px;
+        }
+        .section-awards .awards-item:hover .award-row-icon {
+          color: #0af9cf;
+          background: rgba(10, 249, 207, 0.08);
+          border-color: rgba(10, 249, 207, 0.34);
+        }
+        @media (max-width: 767px) {
+          .section-awards .awards-item .image {
+            width: 100%;
+            flex: none;
+            min-height: unset;
+          }
+        }
+      `}</style>
       <div className="container">
         <div className="heading-section center mb-48">
           <div className="heading-sub fw-semibold style-1 mb-0 effectFade fadeUp">Awards</div>
@@ -26,7 +66,12 @@ function Awards() {
               data-delay={a.delay || undefined}
             >
               <div className="image">
-                <img loading="lazy" src={a.img} alt="" />
+                <span className="award-row-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="8" r="4.2"></circle>
+                    <path d="M9.6 11.4 8.2 20l3.8-2.3 3.8 2.3-1.4-8.6"></path>
+                  </svg>
+                </span>
               </div>
               <div className="title text-body-1 text-white">{a.title}</div>
               <div className="text text-body-1 text-white">{a.text}</div>
