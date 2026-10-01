@@ -73,32 +73,34 @@ function Testimonials({ className = "pt-0" }) {
                 </div>
               </div>
 
-              <div
-                key={active}
-                className={`swiper-testimonial_wrap testimonial-copy-slide ${direction < 0 ? 'from-left' : 'from-right'}`}
-              >
-                {/* Icon */}
-                <div className="top-icon d-flex gap-4">
-                  {t.type === 'stars' ? (
-                    [...Array(5)].map((_, i) => (
-                      <i key={i} className="icon icon-star-solid"></i>
-                    ))
-                  ) : (
-                    <QuoteIcon />
-                  )}
-                </div>
+              <div className="swiper-testimonial_wrap">
+                <div
+                  key={active}
+                  className={`testimonial-copy-slide ${direction < 0 ? 'from-left' : 'from-right'}`}
+                >
+                  {/* Icon */}
+                  <div className="top-icon d-flex gap-4">
+                    {t.type === 'stars' ? (
+                      [...Array(5)].map((_, i) => (
+                        <i key={i} className="icon icon-star-solid"></i>
+                      ))
+                    ) : (
+                      <QuoteIcon />
+                    )}
+                  </div>
 
-                {/* Quote text */}
-                <div className="text-body-1 text-white desc" style={{ margin: '16px 0' }}>
-                  {t.text}
-                </div>
+                  {/* Quote text */}
+                  <div className="text-body-1 text-white desc" style={{ margin: '16px 0' }}>
+                    {t.text}
+                  </div>
 
-                {/* Cite */}
-                <div className="cite">
-                  <img loading="lazy" className="line-left" src="/assets/images/item/line-1.webp" alt="" />
-                  <div className="name text-body-3 text-neutral-400 fw-semibold">{t.name}</div>
-                  <div className="line"></div>
-                  <div className="sub text-body-3 text-neutral-400">{t.role}</div>
+                  {/* Cite */}
+                  <div className="cite">
+                    <img loading="lazy" className="line-left" src="/assets/images/item/line-1.webp" alt="" />
+                    <div className="name text-body-3 text-neutral-400 fw-semibold">{t.name}</div>
+                    <div className="line"></div>
+                    <div className="sub text-body-3 text-neutral-400">{t.role}</div>
+                  </div>
                 </div>
 
                 {/* Nav + dots */}
