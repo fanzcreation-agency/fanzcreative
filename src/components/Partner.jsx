@@ -20,7 +20,6 @@ const PARTNERS = [
   '/assets/images/partner/5.svg',
   '/assets/images/partner/6.svg',
   '/assets/images/partner/7.svg',
-  '/assets/images/partner/9.svg',
   '/assets/images/partner/10.svg',
   '/assets/images/partner/11.svg',
 ];
