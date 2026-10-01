@@ -248,7 +248,7 @@ function Testimonials({ className = "pt-0" }) {
         }
 
         .testimonial-copy-slide.is-entering {
-          animation: testimonialCopyIn 0.48s cubic-bezier(0.22, 1, 0.36, 1) both;
+          animation: testimonialCopyIn 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
         }
 
         .testimonial-copy-slide.is-leaving {
