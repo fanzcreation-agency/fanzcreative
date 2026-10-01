@@ -220,7 +220,7 @@ const PrismaticBurst = ({
   const pausedRef = useRef(paused);
   const gradTexRef = useRef(null);
   const hoverDampRef = useRef(hoverDampness);
-  const isVisibleRef = useRef(true);
+  const isVisibleRef = useRef(false);
   const meshRef = useRef(null);
   const triRef = useRef(null);
 
@@ -235,7 +235,7 @@ const PrismaticBurst = ({
     const container = containerRef.current;
     if (!container) return;
 
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
     const renderer = new Renderer({
       dpr,
       alpha: false,
@@ -317,34 +317,50 @@ const PrismaticBurst = ({
     };
     container.addEventListener('pointermove', onPointer, { passive: true });
 
+    let raf = 0;
+    let last = performance.now();
+    let lastFrame = 0;
+    let accumTime = 0;
+
+    const start = () => {
+      if (!isVisibleRef.current || document.hidden || raf) return;
+      last = performance.now();
+      lastFrame = 0;
+      raf = requestAnimationFrame(update);
+    };
+    const stop = () => {
+      if (raf) cancelAnimationFrame(raf);
+      raf = 0;
+    };
     let io = null;
     if ('IntersectionObserver' in window) {
-      io = new IntersectionObserver(
-        entries => {
-          if (entries[0]) {
-            isVisibleRef.current = entries[0].isIntersecting;
-          }
-        },
-        { root: null, threshold: 0.01 }
-      );
+      io = new IntersectionObserver(([entry]) => {
+        isVisibleRef.current = entry.isIntersecting;
+        if (isVisibleRef.current) start();
+        else stop();
+      }, { threshold: 0.01 });
       io.observe(container);
     }
 
-    const onVis = () => {};
+    const onVis = () => {
+      if (document.hidden) stop();
+      else start();
+    };
     document.addEventListener('visibilitychange', onVis);
 
-    let raf = 0;
-    let last = performance.now();
-    let accumTime = 0;
-
     const update = now => {
+      if (now - lastFrame < 1000 / 30) {
+        raf = requestAnimationFrame(update);
+        return;
+      }
+      lastFrame = now;
       const dt = Math.max(0, now - last) * 0.001;
       last = now;
       const visible = isVisibleRef.current && !document.hidden;
       if (!pausedRef.current) accumTime += dt;
 
       if (!visible) {
-        raf = requestAnimationFrame(update);
+        raf = 0;
         return;
       }
 
@@ -361,10 +377,13 @@ const PrismaticBurst = ({
       renderer.render({ scene: meshRef.current });
       raf = requestAnimationFrame(update);
     };
-    raf = requestAnimationFrame(update);
+    if (!io) {
+      isVisibleRef.current = true;
+      start();
+    }
 
     return () => {
-      cancelAnimationFrame(raf);
+      stop();
       container.removeEventListener('pointermove', onPointer);
       ro?.disconnect();
       if (!ro) window.removeEventListener('resize', resize);
@@ -377,17 +396,17 @@ const PrismaticBurst = ({
       }
       try {
         meshRef.current?.remove?.();
-      } catch (e) {
+      } catch {
         /* ignore dispose errors */
       }
       try {
         triRef.current?.remove?.();
-      } catch (e) {
+      } catch {
         /* ignore dispose errors */
       }
       try {
         programRef.current?.remove?.();
-      } catch (e) {
+      } catch {
         /* ignore dispose errors */
       }
       try {
@@ -395,7 +414,7 @@ const PrismaticBurst = ({
         if (glCtx && gradTexRef.current?.texture) {
           glCtx.deleteTexture(gradTexRef.current.texture);
         }
-      } catch (e) {
+      } catch {
         /* ignore texture delete errors */
       }
       programRef.current = null;
@@ -406,14 +425,6 @@ const PrismaticBurst = ({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useEffect(() => {
-    const canvas = rendererRef.current?.gl?.canvas;
-
-    if (canvas) {
-      canvas.style.mixBlendMode = mixBlendMode && mixBlendMode !== 'none' ? mixBlendMode : '';
-    }
-  }, [mixBlendMode]);
 
   useEffect(() => {
     const program = programRef.current;
@@ -463,8 +474,6 @@ const PrismaticBurst = ({
       gradTex.format = gl.RGBA;
       gradTex.type = gl.UNSIGNED_BYTE;
       gradTex.needsUpdate = true;
-    } else {
-      count = 0;
     }
     program.uniforms.uColorCount.value = count;
   }, [intensity, speed, animationType, colors, distort, offset, rayCount]);

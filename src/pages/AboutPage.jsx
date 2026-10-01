@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useScrollFade } from '../hooks/useScrollFade';
+import { useVisibleVideo } from '../hooks/useVisibleVideo';
 import HeroBackground from '../components/HeroBackground';
 import Partner from '../components/Partner';
 import Statistic from '../components/Statistic';
@@ -8,7 +9,7 @@ import Awards from '../components/Awards';
 import Testimonials from '../components/Testimonials';
 import FAQs from '../components/FAQs';
 import Contact from '../components/Contact';
-import { playTick, playPop, playHover, playClick } from '../hooks/useSound';
+import { playPop, playHover, playClick } from '../hooks/useSound';
 import AnimatedTitleIcon from '../components/AnimatedTitleIcon';
 
 function AboutPage() {
@@ -16,6 +17,7 @@ function AboutPage() {
   const videoRef = useRef(null);
   const promoContainerRef = useRef(null);
   useScrollFade(pageRef);
+  useVisibleVideo(videoRef);
 
   // Video scroll scaling animation using GSAP ScrollTrigger
   useEffect(() => {

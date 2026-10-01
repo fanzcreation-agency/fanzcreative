@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { playHover, playTick } from '../hooks/useSound';
 import { useScrollFade } from '../hooks/useScrollFade';
+import { useVisibleVideo } from '../hooks/useVisibleVideo';
 
 /* ─────────────────────────────────────────────────────────────────────
    VideoModal — animated open/close
@@ -140,9 +141,11 @@ function VideoModal({ onClose }) {
  */
 function Hero() {
   const sectionRef = useRef(null);
+  const previewVideoRef = useRef(null);
   const [stage, setStage] = useState(0); // 0: loading sweep, 1: morphing to position, 2: active
   const [videoModalOpen, setVideoModalOpen] = useState(false);
   useScrollFade(sectionRef);
+  useVisibleVideo(previewVideoRef);
 
   useEffect(() => {
     // Stage 0 -> Stage 1: White sweep finishes, text morphs/glides to bottom
@@ -218,6 +221,7 @@ function Hero() {
             onMouseEnter={playHover}
           >
             <video
+              ref={previewVideoRef}
               src="/assets/videos/promo-reel.mp4"
               autoPlay
               loop

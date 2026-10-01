@@ -3,9 +3,7 @@ import { useScrollFade } from '../hooks/useScrollFade';
 import DotField from './DotField';
 import { playClick, playHover } from '../hooks/useSound';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation } from 'swiper/modules';
 import 'swiper/css';
-import 'swiper/css/navigation';
 
 const SLIDES = [
   {
@@ -42,8 +40,7 @@ function Process({ className = "pt-0" }) {
   const sectionRef = useRef(null);
   useScrollFade(sectionRef);
 
-  const prevRef = useRef(null);
-  const nextRef = useRef(null);
+  const swiperRef = useRef(null);
   const [isEnd, setIsEnd] = useState(false);
   const [isBeginning, setIsBeginning] = useState(true);
 
@@ -75,9 +72,12 @@ function Process({ className = "pt-0" }) {
                 <div
                   className="nav-prev-swiper"
                   role="button"
-                  ref={prevRef}
                   style={{ opacity: isBeginning ? 0.4 : 1, cursor: isBeginning ? 'default' : 'pointer' }}
-                  onClick={playClick}
+                  onClick={() => {
+                    if (isBeginning) return;
+                    swiperRef.current?.slidePrev();
+                    playClick();
+                  }}
                   onMouseEnter={playHover}
                 >
                   <i className="icon icon-angle-left-solid"></i>
@@ -85,12 +85,15 @@ function Process({ className = "pt-0" }) {
                 <div
                   className="nav-next-swiper"
                   role="button"
-                  ref={nextRef}
                   style={{
                     opacity: isEnd ? 0.4 : 1,
                     cursor: isEnd ? 'default' : 'pointer',
                   }}
-                  onClick={playClick}
+                  onClick={() => {
+                    if (isEnd) return;
+                    swiperRef.current?.slideNext();
+                    playClick();
+                  }}
                   onMouseEnter={playHover}
                 >
                   <i className="icon icon-angle-right-solid"></i>
@@ -103,14 +106,10 @@ function Process({ className = "pt-0" }) {
           <div className="col-lg-7">
             <div className="process-slide">
               <Swiper
-                modules={[Navigation]}
-                navigation={{
-                  prevEl: prevRef.current,
-                  nextEl: nextRef.current,
-                }}
-                onBeforeInit={(swiper) => {
-                  swiper.params.navigation.prevEl = prevRef.current;
-                  swiper.params.navigation.nextEl = nextRef.current;
+                onSwiper={(swiper) => {
+                  swiperRef.current = swiper;
+                  setIsBeginning(swiper.isBeginning);
+                  setIsEnd(swiper.isEnd);
                 }}
                 onSlideChange={(swiper) => {
                   setIsBeginning(swiper.isBeginning);

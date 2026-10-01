@@ -8,12 +8,6 @@ import ScrollProgress from './ScrollProgress';
 import CustomCursor from './CustomCursor';
 import { playSpiral } from '../hooks/useSound';
 
-const is404Page = (pathname) => {
-  const validPrefixes = ['/about', '/services', '/services-single', '/web-design', '/branding', '/motion-design', '/website-development', '/works', '/blog', '/contact', '/project/'];
-  if (pathname === '/') return false;
-  return !validPrefixes.some(p => pathname.startsWith(p));
-};
-
 function Layout() {
   const location = useLocation();
   const lenisRef = useRef(null);
@@ -99,10 +93,8 @@ function Layout() {
       <ScrollProgress />
       <CustomCursor />
 
-      <canvas className="cursor-trail" id="trail" style={{ display: 'none' }} />
-
       <main id="wrapper">
-        <Navbar is404={is404Page(location.pathname)} currentPage={location.pathname === '/' ? 'home' : location.pathname.slice(1)} />
+        <Navbar currentPage={location.pathname === '/' ? 'home' : location.pathname.slice(1)} />
         <Outlet />
         <Footer />
       </main>

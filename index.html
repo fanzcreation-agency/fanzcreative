@@ -16,9 +16,6 @@
     <link rel="stylesheet" href="/assets/icon/icomoon/style.css" />
     <link rel="stylesheet" href="/assets/css/bootstrap.min.css" />
     <link rel="stylesheet" href="/assets/css/swiper-bundle.min.css" />
-    <link rel="stylesheet" href="/assets/css/animate.css" />
-    <link rel="stylesheet" href="/assets/css/slick.css" />
-    <link rel="stylesheet" href="/assets/css/slick.theme.css" />
     <link rel="stylesheet" href="/assets/css/styles.css" />
   </head>
   <body class="counter-scroll">
@@ -31,11 +28,9 @@
     -->
     <script src="/assets/js/gsap.min.js"></script>
     <script src="/assets/js/ScrollTrigger.min.js"></script>
-    <script src="/assets/js/ScrollToPlugin.min.js"></script>
     <script>
-      // Make GSAP plugins available on window for components that check them
       if (window.gsap && window.ScrollTrigger) {
-        window.gsap.registerPlugin(window.ScrollTrigger, window.ScrollToPlugin);
+        window.gsap.registerPlugin(window.ScrollTrigger);
       }
     </script>
 

@@ -187,7 +187,7 @@ export default function Orb({
     const container = ctnDom.current;
     if (!container) return;
 
-    const renderer = new Renderer({ alpha: true, premultipliedAlpha: false });
+    const renderer = new Renderer({ alpha: true, premultipliedAlpha: false, dpr: Math.min(window.devicePixelRatio || 1, 1.5) });
     const gl = renderer.gl;
     gl.clearColor(0, 0, 0, 0);
     container.appendChild(gl.canvas);
@@ -213,10 +213,9 @@ export default function Orb({
 
     function resize() {
       if (!container) return;
-      const dpr = window.devicePixelRatio || 1;
       const width = container.clientWidth;
       const height = container.clientHeight;
-      renderer.setSize(width * dpr, height * dpr);
+      renderer.setSize(width, height);
       gl.canvas.style.width = width + 'px';
       gl.canvas.style.height = height + 'px';
       program.uniforms.iResolution.value.set(gl.canvas.width, gl.canvas.height, gl.canvas.width / gl.canvas.height);
@@ -248,11 +247,22 @@ export default function Orb({
       }
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
+    const handleMouseLeave = () => { targetHover = 0; };
+    container.addEventListener('mousemove', handleMouseMove);
+    container.addEventListener('mouseleave', handleMouseLeave);
 
-    let rafId;
+    let rafId = 0;
+    let visible = false;
+    let lastFrame = 0;
+    const frameInterval = 1000 / 30;
     const update = t => {
-      rafId = requestAnimationFrame(update);
+      rafId = 0;
+      if (!visible || document.hidden) return;
+      if (t - lastFrame < frameInterval) {
+        rafId = requestAnimationFrame(update);
+        return;
+      }
+      lastFrame = t;
       const dt = (t - lastTime) * 0.001;
       lastTime = t;
       program.uniforms.iTime.value = t * 0.001;
@@ -269,13 +279,37 @@ export default function Orb({
       program.uniforms.rot.value = currentRot;
 
       renderer.render({ scene: mesh });
+      rafId = requestAnimationFrame(update);
     };
-    rafId = requestAnimationFrame(update);
+    const start = () => {
+      if (!visible || document.hidden || rafId) return;
+      lastTime = performance.now();
+      lastFrame = 0;
+      rafId = requestAnimationFrame(update);
+    };
+    const stop = () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = 0;
+    };
+    const observer = new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting;
+      if (visible) start();
+      else stop();
+    });
+    observer.observe(container);
+    const onVisibilityChange = () => {
+      if (document.hidden) stop();
+      else start();
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
 
     return () => {
-      cancelAnimationFrame(rafId);
+      stop();
+      observer.disconnect();
+      document.removeEventListener('visibilitychange', onVisibilityChange);
       window.removeEventListener('resize', resize);
-      window.removeEventListener('mousemove', handleMouseMove);
+      container.removeEventListener('mousemove', handleMouseMove);
+      container.removeEventListener('mouseleave', handleMouseLeave);
       container.removeChild(gl.canvas);
       gl.getExtension('WEBGL_lose_context')?.loseContext();
     };

@@ -15,7 +15,6 @@
         "react-helmet-async": "^3.0.0",
         "react-router-dom": "^7.18.0",
         "swiper": "^12.2.0",
-        "three": "^0.185.0",
         "vite": "latest"
     },
     "devDependencies": {

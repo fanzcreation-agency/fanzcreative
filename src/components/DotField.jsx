@@ -18,7 +18,6 @@ const DotField = memo(({
   ...rest
 }) => {
   const canvasRef = useRef(null);
-  const svgRef = useRef(null);
   const glowRef = useRef(null);
   const dotsRef = useRef([]);
   const mouseRef = useRef({ x: -9999, y: -9999, prevX: -9999, prevY: -9999, speed: 0 });
@@ -36,7 +35,7 @@ const DotField = memo(({
     const glowEl = glowRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d', { alpha: true });
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
     let resizeTimer;
 
     function resize() { clearTimeout(resizeTimer); resizeTimer = setTimeout(doResize, 100); }
@@ -83,10 +82,16 @@ const DotField = memo(({
       m.prevX = m.x; m.prevY = m.y;
     }
 
-    const speedInterval = setInterval(updateMouseSpeed, 20);
+    let speedInterval;
     let frameCount = 0;
+    let lastFrame = 0;
 
-    function tick() {
+    function tick(now) {
+      if (now - lastFrame < 1000 / 30) {
+        rafRef.current = requestAnimationFrame(tick);
+        return;
+      }
+      lastFrame = now;
       frameCount++;
       const dots = dotsRef.current, m = mouseRef.current;
       const { w, h } = sizeRef.current, p = propsRef.current;
@@ -163,17 +168,42 @@ const DotField = memo(({
     doResize();
     window.addEventListener('resize', resize);
     window.addEventListener('mousemove', onMouseMove, { passive: true });
-    rafRef.current = requestAnimationFrame(tick);
+    let visible = false;
+    const start = () => {
+      if (!visible || document.hidden || rafRef.current !== null) return;
+      mouseRef.current.prevX = mouseRef.current.x;
+      mouseRef.current.prevY = mouseRef.current.y;
+      lastFrame = 0;
+      speedInterval = setInterval(updateMouseSpeed, 50);
+      rafRef.current = requestAnimationFrame(tick);
+    };
+    const stop = () => {
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+      clearInterval(speedInterval);
+      speedInterval = undefined;
+    };
+    const observer = new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting;
+      if (visible) start();
+      else stop();
+    });
+    observer.observe(canvas);
+    const onVisibilityChange = () => {
+      if (document.hidden) stop();
+      else start();
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
     rebuildRef.current = () => { const { w, h } = sizeRef.current; if (w > 0 && h > 0) buildDots(w, h); };
 
     return () => {
-      cancelAnimationFrame(rafRef.current);
-      clearInterval(speedInterval);
+      stop();
+      observer.disconnect();
+      document.removeEventListener('visibilitychange', onVisibilityChange);
       clearTimeout(resizeTimer);
       window.removeEventListener('resize', resize);
       window.removeEventListener('mousemove', onMouseMove);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => { rebuildRef.current?.(); }, [dotRadius, dotSpacing]);
@@ -181,7 +211,7 @@ const DotField = memo(({
   return (
     <div style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }} {...rest}>
       <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
-      <svg ref={svgRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
+      <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
         <defs>
           <radialGradient id={glowIdRef.current}>
             <stop offset="0%" stopColor={glowColor} />

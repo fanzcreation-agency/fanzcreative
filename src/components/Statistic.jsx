@@ -18,7 +18,7 @@ function Statistic() {
   const next = () => setActive((a) => (a + 1) % total);
 
   useEffect(() => {
-    const timer = setInterval(next, 3500);
+    const timer = setInterval(() => setActive((a) => (a + 1) % STATS.length), 3500);
     return () => clearInterval(timer);
   }, []);
 

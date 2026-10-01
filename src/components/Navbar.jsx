@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { playTick, playWhoosh, playPop, playHomeLink, playAboutLink, playHover, playClose } from '../hooks/useSound';
 
-function Navbar({ is404 = false, currentPage = 'home' }) {
+function Navbar({ currentPage = 'home' }) {
   const headerRef = useRef(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
