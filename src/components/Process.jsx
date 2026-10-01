@@ -136,7 +136,7 @@ function Process({ className = "pt-0" }) {
                 dir="ltr"
               >
                 {SLIDES.map((slide, i) => (
-                  <SwiperSlide key={i} style={{ display: 'flex', height: 'auto', paddingBottom: '30px' }}>
+                  <SwiperSlide key={i} style={{ display: 'flex', height: 'auto', padding: '0 12px 30px' }}>
                     <div className="process-card" style={{ width: '100%', height: '100%' }}>
                       <i className={`icon ${slide.icon}`}></i>
                       <div className="content">
