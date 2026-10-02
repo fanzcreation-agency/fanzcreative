@@ -5,6 +5,13 @@ export const SLUGS = [
   'mojave-clothing-store'
 ];
 
+export function splitWorkTitle(title) {
+  if (title.includes('\n')) return title.split('\n');
+  const words = title.trim().split(/\s+/);
+  const midpoint = Math.ceil(words.length / 2);
+  return [words.slice(0, midpoint).join(' '), words.slice(midpoint).join(' ')];
+}
+
 export const WORKS = [
   {
     img: '/assets/images/section/cora-beauty-ecommerce-mockup.webp',

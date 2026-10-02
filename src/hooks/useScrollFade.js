@@ -8,7 +8,7 @@ import { useEffect } from 'react';
  *
  * @param {React.RefObject} ref - ref attached to the section root element
  */
-export function useScrollFade(ref) {
+export function useScrollFade(ref, observedContent, relatedContent) {
   useEffect(() => {
     const root = ref?.current;
     if (!root) return;
@@ -41,5 +41,5 @@ export function useScrollFade(ref) {
     return () => {
       observer.disconnect();
     };
-  }, [ref]);
+  }, [ref, observedContent, relatedContent]);
 }

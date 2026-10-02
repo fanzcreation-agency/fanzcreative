@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, Navigate, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useScrollFade } from '../hooks/useScrollFade';
 import Testimonials from '../components/Testimonials';
@@ -7,6 +7,8 @@ import AnimatedTitleIcon from '../components/AnimatedTitleIcon';
 import { ProjectImageLink } from '../components/FeaturedWorks';
 import { playClick, playHover, playPop } from '../hooks/useSound';
 import { SLUGS } from '../constants';
+import { usePublishedContent } from '../hooks/usePublishedContent';
+import NotFound from './NotFound';
 
 const PROJECT_DATA = [
   {
@@ -103,10 +105,57 @@ function WorkSingle() {
   const { slug } = useParams();
   const projectIndex = SLUGS.indexOf(slug);
   const rootRef = useRef(null);
-  useScrollFade(rootRef);
+  const { item: publishedProject, managed, loading } = usePublishedContent('projects', slug);
+  const { items: publishedProjects, managedSlugs } = usePublishedContent('projects');
+  useScrollFade(rootRef, publishedProject, publishedProjects);
 
-  const project = PROJECT_DATA[projectIndex] || PROJECT_DATA[0];
+  const managedProjects = new Set(managedSlugs);
+  const nextProjects = [
+    ...publishedProjects.map((entry) => ({ ...entry, image: entry.coverUrl || entry.galleryUrls?.[0] })),
+    ...PROJECT_DATA.map((entry, index) => ({
+      slug: SLUGS[index], title: `${entry.title} ${entry.title2}`, summary: entry.tagline,
+      deliverables: entry.deliverables, industry: entry.industry, image: entry.image,
+    })).filter((entry) => !managedProjects.has(entry.slug)),
+  ];
+  const currentPosition = nextProjects.findIndex((entry) => entry.slug === slug);
+  const nextProject = nextProjects.length > 1
+    ? nextProjects[(currentPosition + 1) % nextProjects.length]
+    : nextProjects.find((entry) => entry.slug !== slug);
+
+  const baseProject = PROJECT_DATA[projectIndex];
+  const nextFallback = PROJECT_DATA[0];
+  const publishedTitle = publishedProject?.title || '';
+  const firstTitleLine = PROJECT_DATA[projectIndex]?.title && publishedTitle.startsWith(PROJECT_DATA[projectIndex].title)
+    ? PROJECT_DATA[projectIndex].title
+    : publishedTitle.split(' ')[0];
+  const project = publishedProject ? {
+    ...(baseProject || {
+      nextProjectIndex: 0,
+      nextProjectTitle: `${nextFallback.title} ${nextFallback.title2}`,
+      nextProjectDesc: nextFallback.tagline,
+      nextProjectDeliverables: nextFallback.deliverables.join(', '),
+      nextProjectIndustry: nextFallback.industry,
+      nextProjectImage: nextFallback.image,
+    }),
+    title: firstTitleLine,
+    title2: publishedTitle.slice(firstTitleLine.length).trim(),
+    tagline: publishedProject.summary,
+    image: publishedProject.coverUrl,
+    img1: publishedProject.galleryUrls?.[0],
+    img2: publishedProject.galleryUrls?.[1],
+    img3: publishedProject.galleryUrls?.[2],
+    details: publishedProject.details,
+    detailsContinued: publishedProject.detailsContinued,
+    deliverables: publishedProject.deliverables || [],
+    industry: publishedProject.industry,
+    research: publishedProject.research,
+    results: publishedProject.results,
+  } : managed ? null : baseProject;
   const currentIndex = projectIndex >= 0 ? projectIndex : 0;
+
+  if (publishedProject?.slug && publishedProject.slug !== slug) return <Navigate to={`/project/${publishedProject.slug}`} replace />;
+  if (!project && !loading) return <NotFound />;
+  if (!project) return null;
 
   return (
     <div ref={rootRef} className="service-single-page-wrapper">
@@ -122,10 +171,10 @@ function WorkSingle() {
             <div className="title text-display-2 effectFade fadeRotateX" key={currentIndex}>
               <span className="title1 fw-semibold text-gradient-1">{project.title}</span>
               <br />
-              <div className="title2 d-flex gap-20 justify-content-center flex-wrap align-items-center">
+              {project.title2 && <div className="title2 d-flex gap-20 justify-content-center flex-wrap align-items-center">
                 <span className="fw-semibold text-gradient-1">{project.title2}</span>
                 <AnimatedTitleIcon />
-              </div>
+              </div>}
             </div>
             <p className="text text-body-3 effectFade fadeUp">
               {project.tagline}
@@ -135,14 +184,14 @@ function WorkSingle() {
       </div>
 
       {/* section-work-single */}
-      <div id="works" className="section-services-single flat-spacing pt-0">
+      <div id="works" className={project.image ? 'section-services-single flat-spacing pt-0' : 'section-services-single flat-spacing'} style={project.image ? undefined : { marginTop: 0, paddingTop: 80 }}>
         <div className="container">
           {/* Top Image */}
           <div className="row">
             <div className="col-12">
-              <div className="top-image mb-40 effectFade fadeZoom" key={`img-top-${currentIndex}`}>
+              {project.image && <div className="top-image mb-40 effectFade fadeZoom" key={`img-top-${currentIndex}`}>
                 <img loading="lazy" src={project.image} alt={project.title} />
-              </div>
+              </div>}
             </div>
             <div className="col-12">
               <div className="heading fw-semibold mb-20 effectFade fadeUp">Project Details</div>
@@ -157,9 +206,9 @@ function WorkSingle() {
               </p>
             </div>
             <div className="col-md-5">
-              <p className="text-secondary mb-30 effectFade fadeUp">
+              {project.detailsContinued && <p className="text-secondary mb-30 effectFade fadeUp">
                 {project.detailsContinued}
-              </p>
+              </p>}
               <div className="list-tags effectFade fadeUp">
                 {project.deliverables.map((item, idx) => (
                   <a key={idx} href="#" className="tags-item fw-semibold" onClick={(e) => { e.preventDefault(); playClick(); }} onMouseEnter={playHover}>{item}</a>
@@ -172,36 +221,34 @@ function WorkSingle() {
           </div>
 
           {/* Two Images Side by Side */}
-          <div className="row mb-40">
+          {(project.img1 || project.img2) && <div className="row mb-40">
             <div className="col-md-8 md-mb-24">
-              <div className="image effectFade fadeUp" key={`img-2-${currentIndex}`}>
+              {project.img1 && <div className="image effectFade fadeUp" key={`img-2-${currentIndex}`}>
                 <img loading="lazy" src={project.img1} alt="" />
-              </div>
+              </div>}
             </div>
             <div className="col-md-4">
-              <div className="image effectFade fadeUp" data-delay="0.1" key={`img-3-${currentIndex}`}>
+              {project.img2 && <div className="image effectFade fadeUp" data-delay="0.1" key={`img-3-${currentIndex}`}>
                 <img loading="lazy" src={project.img2} alt="" />
-              </div>
+              </div>}
             </div>
-          </div>
+          </div>}
 
           {/* Project Research */}
-          <div className="row mb-40">
+          {project.research && <div className="row mb-40">
             <div className="col-12">
               <div className="heading fw-semibold mb-20 effectFade fadeUp">Project Research</div>
               <p className="text-secondary effectFade fadeUp">
                 {project.research}
               </p>
             </div>
-          </div>
+          </div>}
 
           {/* Key Deliverables + Image Sidebar */}
           <div className="row justify-content-between mb-40">
             <div className="col-md-6 md-mb-24">
-              <div className="heading fw-semibold mb-20 effectFade fadeUp">Project Results</div>
-              <p className="text-secondary mb-30 effectFade fadeUp">
-                {project.results}
-              </p>
+              {project.results && <><div className="heading fw-semibold mb-20 effectFade fadeUp">Project Results</div>
+              <p className="text-secondary mb-30 effectFade fadeUp">{project.results}</p></>}
               <h6 className="title fw-semibold mb-16 effectFade fadeUp">Key Deliverables</h6>
               <ul className="d-grid gap-8 mb-30">
                 {project.deliverables.map((item, idx) => (
@@ -212,11 +259,11 @@ function WorkSingle() {
                 Start a Project
               </a>
             </div>
-            <div className="col-md-5">
+            {project.img3 && <div className="col-md-5">
               <div className="image bot-image effectFade fadeUp" key={`img-4-${currentIndex}`}>
                 <img loading="lazy" src={project.img3} alt="" />
               </div>
-            </div>
+            </div>}
           </div>
 
         </div>
@@ -231,7 +278,7 @@ function WorkSingle() {
       </div>
 
       {/* Next Project */}
-      <div className="section-featured-works flat-spacing">
+      {nextProject && <div className="section-featured-works flat-spacing">
         <div className="container">
           <div className="heading-section center mb-64">
             <div className="heading-sub fw-semibold effectFade fadeUp">Project</div>
@@ -241,34 +288,34 @@ function WorkSingle() {
             <div className="element effectFade fadeUp" key={`next-card-${currentIndex}`}>
               <div className="featured-works-item" onMouseEnter={playHover}>
                 <ProjectImageLink
-                  src={project.nextProjectImage}
-                  alt={project.nextProjectTitle}
-                  to={`/project/${SLUGS[project.nextProjectIndex]}`}
+                  src={nextProject.image}
+                  alt={nextProject.title}
+                  to={`/project/${nextProject.slug}`}
                 />
                 <div className="content">
                   <div className="pagi-dot">
                     {[0, 1, 2, 3].map((d) => (
-                      <span key={d} className={d === project.nextProjectIndex ? 'active' : ''}></span>
+                      <span key={d} className={d === (currentPosition + 1) % 4 ? 'active' : ''}></span>
                     ))}
                   </div>
                   <div className="bot">
                     <h4 className="heading fw-semibold">
-                      <Link to={`/project/${SLUGS[project.nextProjectIndex]}`} onClick={playClick} onMouseEnter={playHover}>
-                        {project.nextProjectTitle.split(' ')[0]} <br /> {project.nextProjectTitle.split(' ').slice(1).join(' ')}
+                      <Link to={`/project/${nextProject.slug}`} onClick={playClick} onMouseEnter={playHover}>
+                        {nextProject.title.split(' ')[0]} <br /> {nextProject.title.split(' ').slice(1).join(' ')}
                       </Link>
                     </h4>
                     <div className="grid-text">
                       <div className="item">
                         <div className="title text-secondary">DESCRIPTION</div>
-                        <div className="text-body-3 fw-semibold">{project.nextProjectDesc}</div>
+                        <div className="text-body-3 fw-semibold">{nextProject.summary}</div>
                       </div>
                       <div className="item">
                         <div className="title text-secondary">DELIVERABLES</div>
-                        <div className="fw-semibold text-body-3">{project.nextProjectDeliverables}</div>
+                        <div className="fw-semibold text-body-3">{nextProject.deliverables.join(', ')}</div>
                       </div>
                       <div className="item">
                         <div className="title text-secondary">INDUSTRY</div>
-                        <div className="fw-semibold text-body-3">{project.nextProjectIndustry}</div>
+                        <div className="fw-semibold text-body-3">{nextProject.industry}</div>
                       </div>
                     </div>
                   </div>
@@ -277,7 +324,7 @@ function WorkSingle() {
             </div>
           </div>
         </div>
-      </div>
+      </div>}
 
       <style>{`
         .service-single-page-wrapper .project-hero,

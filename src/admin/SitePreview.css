@@ -1,0 +1,25 @@
+.admin-root .site-preview { position: fixed; inset: 0; width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh; margin: 0; padding: 0; border: 0; border-radius: 0; background: #eef2f8; color: #3d4b62; overflow: hidden; }
+.site-preview[open] { display: flex; flex-direction: column; }
+.site-preview::backdrop { background: #17232699; }
+.site-preview-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex: none; min-height: 64px; padding: 10px 20px; border-bottom: 1px solid #cbd5d2; background: #fff; }
+.site-preview-title { display: grid; gap: 2px; min-width: 0; flex: 1; }
+.site-preview-title strong { font-size: 14px; }
+.site-preview-title span { max-width: 400px; font-size: 12px; color: #637570; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.site-preview-devices, .site-preview-actions { display: flex; gap: 4px; flex: none; }
+.site-preview-devices { padding: 3px; border: 1px solid #dce5e2; border-radius: 5px; background: #f6f8f8; }
+.site-preview-toolbar button { display: flex; align-items: center; justify-content: center; gap: 7px; min-width: 36px; height: 34px; padding: 0 10px; border: 0; border-radius: 4px; background: transparent; color: #526963; font-size: 12px; }
+.site-preview-toolbar button:hover { background: #edf4ff; }
+.site-preview-devices button[aria-pressed=true] { color: #247cf0; background: #fff; box-shadow: 0 1px 3px #526b9820; }
+.site-preview-actions { flex: 1; justify-content: flex-end; }
+.site-preview-stage { position: relative; display: flex; justify-content: center; flex: 1; min-height: 0; padding: 16px; }
+.site-preview-stage iframe { display: block; max-width: 100%; height: 100%; border: 0; background: #fff; box-shadow: 0 0 0 1px #cbd5d2; }
+.site-preview-status { position: absolute; z-index: 1; top: 28px; left: 50%; transform: translateX(-50%); max-width: calc(100% - 32px); padding: 10px 16px; border: 1px solid #cbd5d2; border-radius: 4px; background: #fff; font-size: 13px; }
+.site-preview-status button { padding: 0 4px; border: 0; color: #0d685b; background: transparent; text-decoration: underline; }
+@media (max-width: 680px) {
+  .site-preview-toolbar { gap: 8px; padding: 10px; flex-wrap: wrap; }
+  .site-preview-title { flex-basis: calc(100% - 92px); }
+  .site-preview-title span { max-width: 240px; }
+  .site-preview-actions { flex: none; }
+  .site-preview-devices { order: 3; width: 100%; justify-content: center; }
+  .site-preview-stage { padding: 8px; }
+}

@@ -1,0 +1,125 @@
+import assert from 'node:assert/strict';
+import { mkdir, readFile } from 'node:fs/promises';
+import { chromium, expect as baseExpect } from '@playwright/test';
+import { getAuth } from 'firebase-admin/auth';
+import { deleteApp } from 'firebase-admin/app';
+import { getAdminApp } from '../server/firebase-admin.js';
+
+process.loadEnvFile('.env.local');
+const email = process.argv[2];
+if (!email) throw new Error('Usage: node scripts/check-site-preview.mjs <existing-admin-email>');
+const base = process.env.ADMIN_TEST_URL || 'http://localhost:5173';
+const expect = baseExpect.configure({ timeout: 30000 });
+const app = getAdminApp();
+const auth = getAuth(app);
+const user = await auth.getUserByEmail(email);
+assert.equal(user.customClaims?.admin, true);
+const token = await auth.createCustomToken(user.uid);
+const media = JSON.parse(await readFile('src/cloudinary-media.json', 'utf8'));
+const imageUrl = media['/assets/images/blog/blog_ui_ux.webp'].url;
+const browser = await chromium.launch({ channel: 'chrome', headless: true });
+const context = await browser.newContext({ viewport: { width: 1440, height: 960 } });
+const errors = [];
+let writes = 0;
+await context.route('**/api/admin-content', async (route) => {
+  if (route.request().method() !== 'GET') writes++;
+  await route.fulfill({ json: { content: { posts: [], projects: [] } } });
+});
+const page = await context.newPage();
+page.on('pageerror', (error) => errors.push(error.message));
+const preview = page.frameLocator('iframe[title="Article website preview"]');
+const open = async () => {
+  await page.getByRole('button', { name: 'Preview', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: 'Article site preview' })).toBeVisible();
+  await expect(preview.locator('.blog-single-wrap > .title')).toHaveText('Unsaved preview article');
+  await expect(page.locator('.site-preview-status')).toHaveCount(0);
+};
+const noOverflow = async (locator) => assert.equal(await locator.evaluate((element) => element.scrollWidth > element.clientWidth + 1), false);
+
+try {
+  await mkdir('scratch', { recursive: true });
+  await page.goto(`${base}/admin`);
+  await expect(page.getByRole('heading', { name: 'Admin sign in' })).toBeVisible();
+  await page.evaluate(async (customToken) => {
+    const { auth } = await import('/src/lib/firebase.js');
+    const { signInWithCustomToken } = await import('/node_modules/.vite/deps/firebase_auth.js');
+    await signInWithCustomToken(auth, customToken);
+  }, token);
+  await expect(page.getByRole('heading', { name: 'Overview', exact: true })).toBeVisible();
+  await page.goto(`${base}/admin/posts/new`);
+  await page.getByLabel('Title', { exact: true }).fill('Unsaved preview article');
+  await page.getByLabel('Paragraph 1', { exact: true }).fill('First paragraph in the live website layout.');
+  await page.locator('.block-inserter').nth(1).locator('summary').click();
+  await page.locator('.block-inserter').nth(1).getByRole('button', { name: 'Image', exact: true }).click();
+  await page.getByLabel('Image 2 URL', { exact: true }).fill(imageUrl);
+  await page.getByLabel('Image 2 alt text', { exact: true }).fill('Preview inline image');
+  await page.getByLabel('Image 2 caption', { exact: true }).fill('An image between article blocks.');
+  await open();
+  await expect(preview.locator('.tf-header')).toBeVisible();
+  await expect(preview.locator('footer')).toHaveCount(1);
+  await expect(preview.locator('.blog-sidebar')).toBeVisible();
+  await expect(preview.locator('.article-blocks p')).toHaveText('First paragraph in the live website layout.');
+  await expect(preview.locator('.article-blocks figcaption')).toHaveText('An image between article blocks.');
+  await expect(preview.locator('.blog-single-wrap > .image')).toHaveCount(0);
+  await expect(preview.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex, nofollow');
+  const previewUrl = await page.locator('iframe').getAttribute('src');
+  await preview.locator('.article-blocks figure').scrollIntoViewIfNeeded();
+  await expect.poll(() => preview.locator('.article-blocks img').evaluate((image) => image.complete && image.naturalWidth > 0)).toBe(true);
+  await page.screenshot({ path: 'scratch/site-preview-desktop.png', animations: 'disabled' });
+  console.log('PASS complete site header, article, image, sidebar and footer without saving or requiring a cover/slug');
+
+  const desktopFont = await preview.locator('.content-body').evaluate((element) => globalThis.getComputedStyle(element).fontFamily);
+  assert.notEqual(desktopFont, 'Arial, sans-serif');
+  await page.getByRole('button', { name: 'Tablet', exact: true }).click();
+  assert.equal(await page.locator('iframe').evaluate((frame) => frame.clientWidth), 768);
+  await noOverflow(preview.locator('html'));
+  await page.getByRole('button', { name: 'Mobile', exact: true }).click();
+  assert.equal(await page.locator('iframe').evaluate((frame) => frame.clientWidth), 390);
+  await noOverflow(preview.locator('html'));
+  await expect(preview.locator('.article-blocks figure')).toBeVisible();
+  await page.screenshot({ path: 'scratch/site-preview-mobile.png', animations: 'disabled' });
+  await page.getByRole('button', { name: 'Refresh preview', exact: true }).click();
+  await expect(preview.locator('.blog-single-wrap > .title')).toHaveText('Unsaved preview article');
+  await expect(page.locator('.site-preview-status')).toHaveCount(0);
+  await page.waitForTimeout(16000);
+  await expect(page.locator('.site-preview-status')).toHaveCount(0);
+  console.log('PASS desktop/tablet/mobile CSS isolation, image loading and refresh without a false timeout');
+
+  await preview.locator('body').press('Escape');
+  await expect(page.locator('.site-preview')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Preview', exact: true })).toBeFocused();
+  await expect(page.getByLabel('Paragraph 1', { exact: true })).toHaveValue('First paragraph in the live website layout.');
+  await page.getByLabel('Paragraph 1', { exact: true }).fill('Changed without publishing.');
+  await page.getByLabel('Cover URL', { exact: true }).fill(imageUrl);
+  await open();
+  await expect(preview.locator('.article-blocks p')).toHaveText('Changed without publishing.');
+  await expect(preview.locator('.blog-single-wrap > .image img')).toHaveAttribute('src', imageUrl);
+  await page.getByRole('button', { name: 'Close preview', exact: true }).click();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await open();
+  await noOverflow(page.locator('html'));
+  await noOverflow(preview.locator('html'));
+  await page.screenshot({ path: 'scratch/site-preview-phone.png', animations: 'disabled' });
+  await page.getByRole('button', { name: 'Close preview', exact: true }).click();
+  console.log('PASS unsaved edits, optional cover, Escape, focus restoration and phone-sized modal');
+
+  await page.getByLabel('Image 2 URL', { exact: true }).fill('not-an-image-url');
+  await page.getByRole('button', { name: 'Preview article', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('Article image URLs must start with');
+  await page.getByRole('button', { name: 'Close preview', exact: true }).click();
+  await expect(page.getByLabel('Image 2 URL', { exact: true })).toHaveValue('not-an-image-url');
+  await page.getByLabel('Image 2 URL', { exact: true }).fill(imageUrl);
+  console.log('PASS invalid image URLs show a clear preview error without losing editor content');
+
+  const isolated = await context.newPage();
+  await isolated.goto(`${base}${previewUrl}`);
+  await expect(isolated.getByRole('heading', { name: 'Preview unavailable', exact: true })).toBeVisible();
+  await expect(isolated.getByText('Unsaved preview article', { exact: true })).toHaveCount(0);
+  await isolated.close();
+  assert.equal(writes, 0);
+  assert.deepEqual(errors, []);
+  console.log('PASS preview URL does not expose private draft content in a separate window; no content writes or browser errors');
+} finally {
+  await browser.close();
+  await deleteApp(app);
+}

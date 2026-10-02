@@ -1,0 +1,10 @@
+.content-load-more { display: flex; justify-content: center; padding-top: 40px; }
+.content-load-more .tf-btn-2 { min-width: 160px; justify-content: center; }
+.content-filters { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 32px; }
+.content-filter { display: grid; gap: 8px; flex: 1 1 190px; min-width: 0; font-size: 14px; }
+.content-filter select { all: revert; box-sizing: border-box; display: block; width: 100%; max-width: 100%; min-width: 0; height: 46px; padding: 10px 14px; border: 1px solid #cbd3d1; border-radius: 6px; background: #f6f7f7; color: #25282a; font: inherit; letter-spacing: 0; cursor: pointer; }
+.content-filter select option { all: revert; color: #25282a; background: #f6f7f7; }
+.content-filter select:focus-visible { outline: 2px solid #087c69; outline-offset: 2px; }
+.content-empty { padding: 40px 0; text-align: center; color: #687473; }
+.content-list-status { margin-top: 20px; text-align: center; font-size: 14px; color: #687473; }
+@media (max-width: 600px) { .content-filter { flex-basis: 100%; } }

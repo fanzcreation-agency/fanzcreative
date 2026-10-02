@@ -1,10 +1,17 @@
 import { useEffect, useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, Navigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useScrollFade } from '../hooks/useScrollFade';
 import Contact from '../components/Contact';
 import NotFound from './NotFound';
-import { playClick, playHover, playPop } from '../hooks/useSound';
+import { playClick, playHover } from '../hooks/useSound';
+import { contentDate, usePublishedContent } from '../hooks/usePublishedContent';
+import { articleBlocks } from '../../shared/article-blocks';
+import { articleEndQuote } from '../../shared/content';
+import ArticleBlocks from '../components/ArticleBlocks';
+import BlogComments from '../components/BlogComments';
+import { useBlogComments } from '../hooks/useBlogComments';
+import './BlogSingle.css';
 
 const BLOG_DATA = {
   'future-of-ui-ux': {
@@ -131,18 +138,25 @@ const BLOG_DATA = {
 
 function BlogSingle() {
   const { slug } = useParams();
+  const { item: publishedPost, managed, loading } = usePublishedContent('posts', slug);
+  const post = publishedPost || (managed || !BLOG_DATA[slug] ? null : { ...BLOG_DATA[slug], slug });
+  if (publishedPost?.slug && publishedPost.slug !== slug) return <Navigate to={`/blog/single/${publishedPost.slug}`} replace />;
+  if (!post && !loading) return <NotFound />;
+  return post ? <BlogArticle key={slug} article={post} /> : null;
+}
+
+export function BlogArticle({ article, preview = false }) {
   const pageRef = useRef(null);
-  useScrollFade(pageRef);
-
-  const post = BLOG_DATA[slug];
-
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [slug]);
-
-  if (!post) {
-    return <NotFound />;
-  }
+  useScrollFade(pageRef, article);
+  useEffect(() => { window.scrollTo(0, 0); }, []);
+  const comments = useBlogComments(article.slug, preview);
+  const post = article.content ? article : {
+    title: article.title || 'Untitled article',
+    date: contentDate(article),
+    category: article.category,
+    img: article.coverUrl,
+    content: <ArticleBlocks blocks={articleBlocks(article)} />,
+  };
 
   return (
     <div ref={pageRef} className="blog-single-wrapper">
@@ -169,9 +183,9 @@ function BlogSingle() {
           <div className="row justify-content-between">
             <div className="col-lg-7">
               <div className="blog-single-wrap">
-                <div className="image effectFade fadeZoom mb-40">
+                {post.img && <div className="image effectFade fadeZoom mb-40">
                   <img loading="lazy" width="777" height="548" src={post.img} alt={post.title} style={{ objectFit: 'cover', width: '100%', height: '100%', borderRadius: '24px' }} />
-                </div>
+                </div>}
                 <h2 className="title fw-semibold mb-24">{post.title}</h2>
                 <div className="meta-list mb-40">
                   <div className="meta-item">
@@ -184,7 +198,7 @@ function BlogSingle() {
                   </div>
                   <div className="meta-item">
                     <i className="icon icon-comments-solid"></i>
-                    <span>No Comments</span>
+                    <a href="#comments" className="link">{comments.loading ? 'Comments' : comments.count ? `${comments.count} ${comments.count === 1 ? 'Comment' : 'Comments'}` : 'No Comments'}</a>
                   </div>
                 </div>
                 
@@ -193,7 +207,7 @@ function BlogSingle() {
                 </div>
 
                 <div className="blockquote-wrap mb-40">
-                  <h5 className="fw-medium text-white">“ A little universe of inspiration — where passion meets professionalism and creativity knows no bounds. Exceptional service, stunning products that made me go 'wow' at first glance, and prices that make you smile! ”</h5>
+                  <h5 className="fw-medium text-white">“ {articleEndQuote(article)} ”</h5>
                   <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M44.375 70.4063V41.0938C44.375 33.0729 47.0729 26.3646 52.4687 20.9688C58.0104 15.4271 65.5208 11.6354 75 9.59375V29.0625C71.3542 30.2292 68.9479 31.6875 67.7812 33.4375C66.6146 35.0417 65.9583 37.0833 65.8125 39.5625H75V70.4063H44.375ZM5 70.4063V41.0938C5 33.0729 7.69792 26.3646 13.0938 20.9688C18.6354 15.4271 26.1458 11.6354 35.625 9.59375V29.0625C32.125 30.2292 29.7187 31.6875 28.4062 33.4375C27.2396 35.0417 26.5833 37.0833 26.4375 39.5625H35.625V70.4063H5Z" fill="#27272A"/>
                   </svg>
@@ -224,56 +238,12 @@ function BlogSingle() {
                   </div>
                 </div>
 
-                <div className="comment-wrap">
-                  <h4 className="heading fw-semibold">Comments</h4>
-                  <div className="author">
-                    <div className="image">
-                      <img loading="lazy" width="48" height="48" src="/assets/images/section/tes-1.webp" alt="Image" />
-                    </div>
-                    <div className="content">
-                      <div className="info">
-                        <h6 className="name fw-semibold text-body-1">
-                          <Link className="link1" to="#" onClick={(e) => { e.preventDefault(); playClick(); }} onMouseEnter={playHover}>Davies</Link>
-                        </h6>
-                        <p className="time text-body-3 text-white-64">July 8, 2026 at 7:35 am</p>
-                      </div>
-                      <a href="#post-comment" className="reply link1" onClick={playClick} onMouseEnter={playHover}>Reply<i className="icon icon-arrow-top-right"></i></a>
-                      <p className="desc">“ Sed vitae velit erat. Pellentesque lobortis felis vel mi congue, in
-                          sollicitudin orci tincidunt. Praesent turpis justo, posuere eget justo sit
-                          amet, efficitur suscipit elit. “</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="post-comment" id="post-comment">
-                  <h4 className="heading fw-semibold">Post a Comments</h4>
-                  <p className="text text-body-1">Your email address will not be published. Required fields are marked *</p>
-                  <form className="form-cta style-2" onSubmit={(e) => e.preventDefault()}>
-                    <div className="form-content">
-                      <fieldset>
-                        <label className="fw-semibold text-body-3 mb-12">Your Name</label>
-                        <input type="text" placeholder="Enter your full name" required />
-                      </fieldset>
-                      <fieldset>
-                        <label className="fw-semibold text-body-3 mb-12">Your Email</label>
-                        <input type="email" placeholder="Enter your email" required />
-                      </fieldset>
-                      <fieldset>
-                        <label className="fw-semibold text-body-3 mb-12">Message</label>
-                        <textarea name="text" className="rounded-0"></textarea>
-                      </fieldset>
-                    </div>
-                    <div className="form-action">
-                      <button type="submit" className="tf-btn w-100" onClick={playPop} onMouseEnter={playHover}>Submit Message</button>
-                    </div>
-                  </form>
-                </div>
               </div>
             </div>
 
-            <div className="col-lg-4">
-              <div className="blog-sidebar m-lg-0">
-                <div className="sidebar-item effectFade fadeUp no-div">
+            <div className="col-lg-4 blog-sidebar-column">
+              <aside className="blog-sidebar m-lg-0" aria-label="Blog sidebar" tabIndex={0} data-lenis-prevent>
+                <div className="sidebar-item no-div">
                   <h5 className="sidebar-title">Search</h5>
                   <form className="form-search" onSubmit={(e) => e.preventDefault()}>
                     <fieldset className="text">
@@ -284,7 +254,7 @@ function BlogSingle() {
                     </button>
                   </form>
                 </div>
-                <div className="sidebar-item effectFade fadeUp no-div">
+                <div className="sidebar-item no-div">
                   <h5 className="sidebar-title">Recent posts</h5>
                   <div className="list-relatest-post">
                     <div className="relatest-post-item">
@@ -315,7 +285,7 @@ function BlogSingle() {
                     </div>
                   </div>
                 </div>
-                <div className="sidebar-item effectFade fadeUp no-div">
+                <div className="sidebar-item no-div">
                   <h5 className="sidebar-title">Category</h5>
                   <div className="sidebar-categories">
                     <div className="item">
@@ -328,7 +298,7 @@ function BlogSingle() {
                     </div>
                   </div>
                 </div>
-                <div className="sidebar-item effectFade fadeUp no-div">
+                <div className="sidebar-item no-div">
                   <h5 className="sidebar-title">Popular tag</h5>
                   <div className="list-tags">
                     <Link to="#" className="tags-item fw-semibold" onClick={(e) => { e.preventDefault(); playClick(); }} onMouseEnter={playHover}>Stakeholder</Link>
@@ -336,9 +306,10 @@ function BlogSingle() {
                     <Link to="#" className="tags-item fw-semibold" onClick={(e) => { e.preventDefault(); playClick(); }} onMouseEnter={playHover}>Data readiness</Link>
                   </div>
                 </div>
-              </div>
+              </aside>
             </div>
           </div>
+          <div className="row"><div className="col-lg-7"><BlogComments slug={article.slug} comments={comments} preview={preview} /></div></div>
         </div>
       </section>
       {/* /Blog With Sidebar */}

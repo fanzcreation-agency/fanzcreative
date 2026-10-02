@@ -2,7 +2,8 @@ import { useLayoutEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useScrollFade } from '../hooks/useScrollFade';
 import { playList, playHover } from '../hooks/useSound';
-import { SLUGS, WORKS } from '../constants';
+import { splitWorkTitle } from '../constants';
+import { useProjectCollection } from '../hooks/useProjectCollection';
 
 export function ProjectImageLink({ src, alt, to }) {
   return (
@@ -31,7 +32,8 @@ function FeaturedWorks() {
   const sectionRef = useRef(null);
   const pinRef = useRef(null);
   const cardsRef = useRef([]);
-  useScrollFade(sectionRef);
+  const { featuredProjects: works } = useProjectCollection();
+  useScrollFade(sectionRef, works);
 
   useLayoutEffect(() => {
     const gsap = window.gsap;
@@ -40,7 +42,7 @@ function FeaturedWorks() {
     gsap.registerPlugin(ScrollTrigger);
     const section = sectionRef.current;
     const pin = pinRef.current;
-    const cards = cardsRef.current.filter(Boolean);
+    const cards = cardsRef.current.slice(0, works.length).filter(Boolean);
 
     if (!section || !pin || cards.length < 2) return undefined;
 
@@ -117,7 +119,9 @@ function FeaturedWorks() {
     }, section);
 
     return () => ctx.revert();
-  }, []);
+  }, [works]);
+
+  if (!works.length) return null;
 
   return (
     <div id="works" className="section-featured-works sticky-works-section flat-spacing pt-0" ref={sectionRef}>
@@ -130,13 +134,13 @@ function FeaturedWorks() {
           </div>
 
           <div className="featured-works-list sticky-works-stack position-relative">
-            {WORKS.map((work, i) => {
-              const titleLines = work.title.split('\n');
+            {works.map((work, i) => {
+              const titleLines = splitWorkTitle(work.title);
               const deliverableLines = work.deliverables.split('\n');
 
               return (
                 <div
-                  key={i}
+                  key={work.slug}
                   className="sticky-works-card"
                   ref={(el) => {
                     cardsRef.current[i] = el;
@@ -146,7 +150,7 @@ function FeaturedWorks() {
                     <ProjectImageLink
                       src={work.img}
                       alt={work.title.replace('\n', ' ')}
-                      to={`/project/${SLUGS[i]}`}
+                      to={`/project/${work.slug}`}
                     />
 
                     <div className="content">
@@ -158,8 +162,8 @@ function FeaturedWorks() {
 
                       <div className="bot">
                         <h4 className="heading fw-semibold">
-                          <Link to={`/project/${SLUGS[i]}`} onClick={playList} onMouseEnter={playHover}>
-                            {titleLines[0]} <br /> {titleLines[1]}
+                          <Link to={`/project/${work.slug}`} onClick={playList} onMouseEnter={playHover}>
+                            {titleLines[0]} {titleLines[1] && <><br /> {titleLines[1]}</>}
                           </Link>
                         </h4>
                         <div className="grid-text">

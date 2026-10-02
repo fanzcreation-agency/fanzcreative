@@ -1,0 +1,23 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+
+    match /posts/{slug} {
+      allow read: if resource.data.status == 'published' || isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /projects/{slug} {
+      allow read: if resource.data.status == 'published' || isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Comments (including emails) and abuse-protection data are server-API only.
+    match /comments/{id} { allow read, write: if false; }
+    match /commentRateLimits/{id} { allow read, write: if false; }
+    match /commentDuplicates/{id} { allow read, write: if false; }
+  }
+}

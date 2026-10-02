@@ -1,38 +1,17 @@
 import { Link } from 'react-router-dom';
 import { playClick, playHover } from '../hooks/useSound';
-
-const CASE_STUDIES = [
-  {
-    id: 'cora-beauty',
-    title: 'Cora Skincare & Packaging',
-    image: '/assets/images/section/cora-beauty-ecommerce-mockup.webp',
-    link: '/project/cora-beauty-skincare',
-    category: 'Packaging / Brand',
-  },
-  {
-    id: 'marble-fashion',
-    title: 'Marble Couture Editorial',
-    image: '/assets/images/section/marble-fashion-ecommerce-mockup.webp',
-    link: '/project/marble-fashion-ecommerce',
-    category: 'E-Commerce / Motion',
-  },
-  {
-    id: 'mojave-apparel',
-    title: 'Mojave Outerwear Studio',
-    image: '/assets/images/section/mojave-clothing-store-mockup.webp',
-    link: '/project/mojave-clothing-store',
-    category: 'Visual Identity',
-  },
-  {
-    id: 'revolution-store',
-    title: 'Revolution Digital Lab',
-    image: '/assets/images/section/revolution-fashion-store-mockup.webp',
-    link: '/project/revolution-fashion-store',
-    category: 'Web App / 3D',
-  },
-];
+import { useProjectCollection } from '../hooks/useProjectCollection';
 
 function RecentWorks() {
+  const { featuredProjects } = useProjectCollection();
+  const caseStudies = featuredProjects.map((project) => ({
+      id: project.slug,
+      title: project.title,
+      image: project.img,
+      link: `/project/${project.slug}`,
+      category: project.projectType || project.industry || 'Project',
+    }));
+  if (!caseStudies.length) return null;
   return (
     <section className="recent-works-section" style={{ backgroundColor: '#09090b', color: '#ffffff', padding: '90px 0 100px', overflow: 'hidden' }}>
       <style>{`
@@ -186,7 +165,7 @@ function RecentWorks() {
             paddingBottom: '15px',
           }}
         >
-          {CASE_STUDIES.map((item) => (
+          {caseStudies.map((item) => (
             <div key={item.id} className="rw-card-wrapper" style={{ scrollSnapAlign: 'start' }} onMouseEnter={playHover}>
               <Link to={item.link} className="rw-card-image-link" onClick={playClick} aria-label={`View ${item.title} project`}>
                 <img src={item.image} alt={item.title} className="rw-card-img" loading="lazy" />

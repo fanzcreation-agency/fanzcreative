@@ -7,14 +7,30 @@ import Pricing from '../components/Pricing';
 import FAQs from '../components/FAQs';
 import Contact from '../components/Contact';
 import { ProjectImageLink } from '../components/FeaturedWorks';
-import { WORKS } from '../constants';
-import { SLUGS } from '../constants';
+import { splitWorkTitle } from '../constants';
 import { playClick, playHover } from '../hooks/useSound';
+import { useProjectCollection } from '../hooks/useProjectCollection';
+import { filterOptions, filterProjects, PAGE_SIZE, projectServices } from '../../shared/content-layout';
+import { ArrowDown, LayoutGrid, List } from 'lucide-react';
+import '../components/ContentListing.css';
 
 function WorksPage() {
   const pageRef = useRef(null);
-  useScrollFade(pageRef);
   const [layoutMode, setLayoutMode] = useState('single');
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [filters, setFilters] = useState({ industry: '', service: '', projectType: '' });
+  const { projects } = useProjectCollection();
+  const works = filterProjects(projects, filters);
+  useScrollFade(pageRef, projects, `${visibleCount}:${layoutMode}:${JSON.stringify(filters)}`);
+  const changeFilter = (field) => (event) => {
+    setFilters((previous) => ({ ...previous, [field]: event.target.value }));
+    setVisibleCount(PAGE_SIZE);
+  };
+  const options = {
+    industry: filterOptions(projects.map((project) => project.industry)),
+    service: filterOptions(projects.flatMap(projectServices)),
+    projectType: filterOptions(projects.map((project) => project.projectType)),
+  };
 
   return (
     <div ref={pageRef} className="works-page-wrapper">
@@ -48,7 +64,7 @@ function WorksPage() {
         <div className="container">
           <div className="d-flex justify-content-between align-items-center mb-40">
             <div className="heading-section mb-0">
-              <div className="heading-sub fw-semibold effectFade fadeUp" style={{ margin: 0 }}>Featured Works</div>
+              <div className="heading-sub fw-semibold effectFade fadeUp" style={{ margin: 0 }}>Our Works</div>
             </div>
             <div className="layout-toggle d-flex gap-12 align-items-center effectFade fadeUp">
               <button 
@@ -63,15 +79,10 @@ function WorksPage() {
                   cursor: 'pointer', transition: 'all 0.3s ease'
                 }}
                 aria-label="List View"
+                aria-pressed={layoutMode === 'single'}
+                title="List view"
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="8" y1="6" x2="21" y2="6"></line>
-                  <line x1="8" y1="12" x2="21" y2="12"></line>
-                  <line x1="8" y1="18" x2="21" y2="18"></line>
-                  <line x1="3" y1="6" x2="3.01" y2="6"></line>
-                  <line x1="3" y1="12" x2="3.01" y2="12"></line>
-                  <line x1="3" y1="18" x2="3.01" y2="18"></line>
-                </svg>
+                <List size={20} />
               </button>
               <button 
                 onClick={() => { setLayoutMode('grid'); playClick(); }}
@@ -85,27 +96,29 @@ function WorksPage() {
                   cursor: 'pointer', transition: 'all 0.3s ease'
                 }}
                 aria-label="Grid View"
+                aria-pressed={layoutMode === 'grid'}
+                title="Grid view"
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="3" width="7" height="7"></rect>
-                  <rect x="14" y="3" width="7" height="7"></rect>
-                  <rect x="14" y="14" width="7" height="7"></rect>
-                  <rect x="3" y="14" width="7" height="7"></rect>
-                </svg>
+                <LayoutGrid size={20} />
               </button>
             </div>
           </div>
+          <div className="content-filters">
+            {[['industry', 'Industry'], ['service', 'Service'], ['projectType', 'Type']].map(([field, label]) => (
+              <label className="content-filter" key={field}><span>{label}</span><select aria-label={label} value={filters[field]} onChange={changeFilter(field)}><option value="">All {label === 'Industry' ? 'industries' : `${label.toLowerCase()}s`}</option>{options[field].map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
+            ))}
+          </div>
           <div className={`featured-works-list position-relative ${layoutMode === 'grid' ? 'grid-mode' : ''}`}>
-            {WORKS.map((work, i) => {
-              const titleLines = work.title.split('\n');
+            {works.slice(0, visibleCount).map((work, i) => {
+              const titleLines = splitWorkTitle(work.title);
               const deliverableLines = work.deliverables.split('\n');
 
               return (
-                <div key={i} className={`featured-works-item${i === 0 ? ' effectFade fadeUp no-div' : ''}`}>
+                <div key={work.slug} className={`featured-works-item${i === 0 ? ' effectFade fadeUp no-div' : ''}`}>
                   <ProjectImageLink
                     src={work.img} 
                     alt={work.title.replace('\n', ' ')}
-                    to={`/project/${SLUGS[i]}`}
+                    to={`/project/${work.slug}`}
                   />
                   <div className="content">
                     <div className="pagi-dot">
@@ -115,7 +128,7 @@ function WorksPage() {
                     </div>
                     <div className="bot">
                       <h4 className="heading fw-semibold">
-                        <Link to={`/project/${SLUGS[i]}`} onClick={playClick} onMouseEnter={playHover}>
+                        <Link to={`/project/${work.slug}`} onClick={playClick} onMouseEnter={playHover}>
                           {titleLines[0]} {titleLines[1] && <><br /> {titleLines[1]}</>}
                         </Link>
                       </h4>
@@ -146,6 +159,9 @@ function WorksPage() {
               );
             })}
           </div>
+          {!works.length && <p className="content-empty" role="status">No projects match these filters.</p>}
+          {visibleCount < works.length && <div className="content-load-more"><button type="button" className="tf-btn-2" onClick={() => { setVisibleCount((count) => count + PAGE_SIZE); playClick(); }}>Load More <ArrowDown size={18} /></button></div>}
+          {!!works.length && <p className="content-list-status" role="status">{Math.min(visibleCount, works.length)} of {works.length} projects</p>}
         </div>
       </div>
 

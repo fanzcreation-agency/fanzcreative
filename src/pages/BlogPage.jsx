@@ -1,11 +1,15 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
+import { ArrowDown, FileText } from 'lucide-react';
 import { useScrollFade } from '../hooks/useScrollFade';
 import Contact from '../components/Contact';
 import { playClick, playHover } from '../hooks/useSound';
 
 import AnimatedTitleIcon from '../components/AnimatedTitleIcon';
+import { contentDate, usePublishedContent } from '../hooks/usePublishedContent';
+import { latestContent, PAGE_SIZE } from '../../shared/content-layout';
+import '../components/ContentListing.css';
 
 const BLOG_POSTS = [
   {
@@ -66,7 +70,23 @@ const BLOG_POSTS = [
 
 function BlogPage() {
   const pageRef = useRef(null);
-  useScrollFade(pageRef);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const { items: publishedPosts, managedSlugs } = usePublishedContent('posts');
+  useScrollFade(pageRef, publishedPosts, visibleCount);
+  const managed = new Set(managedSlugs);
+  const posts = latestContent([
+    ...publishedPosts.map((post) => ({
+    id: post.slug,
+    slug: post.slug,
+    title: post.title,
+    excerpt: post.excerpt,
+    category: post.category,
+    publishedAt: post.publishedAt,
+    date: contentDate(post),
+    img: post.coverUrl,
+    })),
+    ...BLOG_POSTS.filter((post) => !managed.has(post.slug)),
+  ]);
 
   return (
     <div ref={pageRef} className="blog-page-wrapper">
@@ -115,6 +135,14 @@ function BlogPage() {
             height: 100%;
             object-fit: cover;
           }
+          .blog-page-wrapper .blog-posts-grid .blog-image-fallback {
+            display: grid;
+            place-items: center;
+            width: 100%;
+            height: 100%;
+            color: #7f9290;
+            background: #e7eeec;
+          }
           .blog-page-wrapper .blog-posts-grid .blog-content {
             flex: 1;
             gap: 20px;
@@ -131,10 +159,10 @@ function BlogPage() {
         `}</style>
         <div className="container">
           <div className="tf-grid-layout sm-col-2 lg-col-3 blog-posts-grid">
-            {BLOG_POSTS.map((post, i) => (
-              <div key={post.id} className="article-blog hover-img effectFade fadeUp no-div" data-delay={(i * 0.1).toString()}>
+            {posts.slice(0, visibleCount).map((post, i) => (
+              <div key={post.id} className="article-blog hover-img effectFade fadeUp no-div" data-delay={((i % 3) * 0.1).toString()}>
                 <Link to={`/blog/single/${post.slug}`} className="blog-image img-style" onClick={playClick} onMouseEnter={playHover}>
-                  <img loading="lazy" width="426" height="320" src={post.img} alt={post.title} />
+                  {post.img ? <img loading="lazy" width="426" height="320" src={post.img} alt={post.title} /> : <span className="blog-image-fallback"><FileText size={36} strokeWidth={1.4} /></span>}
                 </Link>
                 <div className="blog-content">
                   <div className="infor">
@@ -156,6 +184,8 @@ function BlogPage() {
               </div>
             ))}
           </div>
+          {visibleCount < posts.length && <div className="content-load-more"><button type="button" className="tf-btn-2" onClick={() => { setVisibleCount((count) => count + PAGE_SIZE); playClick(); }}>Load More <ArrowDown size={18} /></button></div>}
+          <p className="content-list-status" role="status">{Math.min(visibleCount, posts.length)} of {posts.length} articles</p>
         </div>
       </section>
       {/* /Blog Grid */}

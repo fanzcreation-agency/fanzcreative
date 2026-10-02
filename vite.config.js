@@ -1,6 +1,7 @@
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { readFileSync } from 'node:fs';
+import { apiMiddleware } from './server/dev-api.js';
 
 const cloudinaryMedia = JSON.parse(readFileSync(new URL('./src/cloudinary-media.json', import.meta.url)));
 
@@ -28,8 +29,17 @@ function cloudinaryMediaPlugin() {
   };
 }
 
-export default defineConfig({
-  plugins: [cloudinaryMediaPlugin(), react()],
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '');
+  for (const key of ['FIREBASE_SERVICE_ACCOUNT_JSON', 'GOOGLE_APPLICATION_CREDENTIALS', 'CLOUDINARY_URL', 'CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET']) {
+    if (env[key]) process.env[key] = env[key];
+  }
+  return {
+  plugins: [cloudinaryMediaPlugin(), react(), {
+    name: 'local-content-api',
+    configureServer(server) { server.middlewares.use(apiMiddleware); },
+    configurePreviewServer(server) { server.middlewares.use(apiMiddleware); },
+  }],
   // public/ is already the default; explicit for clarity
   publicDir: 'public',
   build: {
@@ -56,4 +66,5 @@ export default defineConfig({
       }
     }
   }
+  };
 });

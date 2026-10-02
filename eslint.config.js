@@ -29,7 +29,7 @@ export default [
     },
   },
   {
-    files: ["scripts/**/*.mjs"],
+    files: ["scripts/**/*.mjs", "api/**/*.js", "server/**/*.js", "vite.config.js"],
     languageOptions: {
       globals: globals.node,
     },

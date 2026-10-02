@@ -1,0 +1,37 @@
+.admin-comment-controls { display: flex; align-items: end; justify-content: space-between; flex-wrap: wrap; gap: 14px; margin: 0; padding: 18px 20px; background: #fff; }
+.admin-comment-controls label { display: grid; gap: 7px; color: #8997ad; font-size: 11px; }
+.admin-root .admin-comment-controls select { all: revert; box-sizing: border-box; max-width: 260px; min-height: 37px; padding: 7px 10px; border: 1px solid #e2e9f4; border-radius: 5px; color: #6d7e96; background: #fff; font: inherit; font-size: 12px; }
+.admin-root .admin-comment-controls option { color: #65738a; background: #fff; }
+.admin-comment-bulk { display: flex; gap: 8px; align-items: center; }
+.admin-comments-table th:first-child, .admin-comments-table td:first-child { width: 36px; }
+.admin-comments-table th:nth-child(2) { width: 21%; }
+.admin-comments-table th:nth-child(3) { width: 50%; }
+.admin-comments-table td { vertical-align: top; }
+.admin-comments-table td strong, .admin-comments-table td small { display: block; overflow-wrap: anywhere; }
+.admin-comments-table td small { margin-top: 6px; color: #95a1b5; font-size: 11px; }
+.admin-comments-table td strong { color: #65728a; font-size: 12px; font-weight: 500; }
+.admin-comments-table input[type=checkbox] { width: 15px; height: 15px; accent-color: #247cf0; }
+.admin-root .admin-comment-text { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; margin: 10px 0; overflow: hidden; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; }
+.admin-comment-row-actions { display: flex; flex-wrap: wrap; gap: 8px 12px; }
+.admin-comment-row-actions button { padding: 3px 0; border: 0; background: transparent; color: #7297c9; font-size: 11px; }
+.admin-comment-row-actions button:hover { color: #247cf0; }
+.admin-comment-row-actions .danger { color: #c78e87; }
+.admin-status.pending { color: #aa7a2e; background: #fff8e9; }
+.admin-status.approved { color: #378d73; background: #edf8f3; }
+.admin-status.spam, .admin-status.trash { color: #bb7972; background: #fff1ef; }
+.admin-comment-dialog { width: min(620px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); margin: auto; padding: 28px; border: 1px solid #e2e9f4; border-radius: 8px; background: #fff; color: #59677f; box-shadow: 0 20px 80px #28344a25; }
+.admin-comment-dialog::backdrop { background: #1f2a4266; }
+.admin-comment-dialog-header { display: flex; justify-content: space-between; gap: 16px; align-items: start; margin-bottom: 20px; }
+.admin-root .admin-comment-dialog-header h2 { font-size: 19px; overflow-wrap: anywhere; }
+.admin-comment-dialog-header button { display: grid; place-items: center; width: 30px; height: 30px; flex: none; border: 0; border-radius: 4px; background: #f5f7fc; color: #8c9ab0; }
+.admin-comment-dialog blockquote { padding: 16px; margin-bottom: 22px; border-left: 2px solid #c9dcf8; background: #f8faff; color: #8392a9; font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 160px; overflow: auto; }
+.admin-comment-fields { display: grid; gap: 16px; min-width: 0; padding: 0; border: 0; }
+.admin-root .admin-comment-fields input[type=email] { padding: 11px 12px; border: 1px solid #e3e9f3; border-radius: 5px; color: #59677f; background: #fff; }
+@media (max-width: 575px) {
+  .admin-comment-controls { align-items: stretch; }
+  .admin-comment-controls > label, .admin-comment-bulk { width: 100%; }
+  .admin-root .admin-comment-controls select { max-width: 100%; }
+  .admin-comment-bulk select { flex: 1; min-width: 0; }
+  .admin-comments-table { min-width: 660px; }
+  .admin-comment-dialog { padding: 18px; }
+}

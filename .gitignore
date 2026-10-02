@@ -64,7 +64,14 @@ Thumbs.db
 
 # Local env files
 .env
+.env.*
+!.env.example
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+firebase-service-account*.json
+*-firebase-adminsdk-*.json
+
+# Local Vercel project settings and build cache
+.vercel/
