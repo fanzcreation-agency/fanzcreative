@@ -19,11 +19,15 @@ Vercel functions in `api/` sign admin uploads and serve published content withou
 shipping the Firebase SDK to public pages.
 
 1. In Firebase Authentication, enable Email/Password, create the intended admin user,
-   and add `fanzcreative.design` and `www.fanzcreative.design` as authorized domains.
+   and add `fanzcreative-nine.vercel.app` and any custom production domains as authorized domains.
 2. Configure the Vercel project with `FIREBASE_SERVICE_ACCOUNT_JSON` (the complete
    service-account JSON), `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and
    `CLOUDINARY_API_SECRET`. Use a newly rotated Cloudinary secret. Never prefix these
    server-only values with `VITE_` or commit the service-account JSON.
+   Also set the six public `VITE_FIREBASE_*` variables listed in `.env.example`
+   using the Firebase web app configuration. These are included in the browser build,
+   so they must never contain server secrets. Configure Production (and Preview if used)
+   before deploying, and redeploy after changing their values.
 3. Deploy `firestore.rules` with `firebase deploy --only firestore:rules --project fanzcreative-1bf9e`.
 4. Grant the existing Auth user admin access once with
    `node scripts/grant-admin.mjs <admin-email>` while `FIREBASE_SERVICE_ACCOUNT_JSON`
@@ -36,14 +40,16 @@ shipping the Firebase SDK to public pages.
    account environment variable set. Existing Firestore documents are never overwritten.
 6. Deploy the site to Vercel. Visit `/admin` to manage drafts and published content.
 
-The Firebase web config in `src/lib/firebase.js` is public by design. Auth tokens and
+The Firebase web config in `src/lib/firebase.js` comes from `VITE_FIREBASE_*`
+environment variables and is public by design. Auth tokens and
 Firestore rules, not that config, enforce access. Existing hard-coded blog/project
 entries remain as fallbacks until they are migrated to Firestore. Archiving a managed
 entry removes it from the public site without exposing its draft content. Newly published
 entries refresh on open public pages after admin saves and also refresh again when the
 visitor focuses the page.
 
-For local checks, create a gitignored `.env.local` with the same server-only values,
+For local checks, create a gitignored `.env.local` with the public Firebase configuration
+and the server-only values above. Restart the dev server after changing configuration,
 then run:
 
 ```bash
