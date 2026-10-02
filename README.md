@@ -63,6 +63,19 @@ The browser admin check creates temporary QA blog/project records, verifies imag
 crop/upload, publish, archive/restore, public-page links, and then removes its own
 test records and uploaded test images.
 
+### Serverless Runtime Compatibility
+
+The scoped `jwks-rsa > jose` override keeps Firebase Admin's key loader compatible
+with serverless runtimes that cannot use CommonJS `require()` on ESM-only modules.
+`jose` 5.10.0 provides both CommonJS and ESM exports; Firebase Admin and `jwks-rsa`
+remain on their existing versions. Keep this override until the upstream loading
+issue is resolved: https://github.com/auth0/node-jwks-rsa/issues/507.
+
+`npm test` checks all API imports and authentication/method guards with Node's
+`require(esm)` support disabled, plus RSA/EC signing-key conversion and signature
+verification. Commit both `package.json` and `package-lock.json` when deploying
+this fix so Vercel installs the same compatible dependency tree.
+
 ## Content Layout
 
 The blog lists the latest 12 articles and adds 12 more per Load More click. Projects
