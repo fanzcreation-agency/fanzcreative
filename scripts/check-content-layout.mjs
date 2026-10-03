@@ -1,15 +1,17 @@
 import assert from 'node:assert/strict';
-import { mkdir } from 'node:fs/promises';
+import { mkdir, readFile } from 'node:fs/promises';
 import { chromium, expect } from '@playwright/test';
 import { getAuth } from 'firebase-admin/auth';
 import { getAdminApp } from '../server/firebase-admin.js';
 import { prepareContent } from '../shared/content.js';
+import { signInAdminTest } from './admin-test-login.mjs';
 
 const base = process.env.LAYOUT_TEST_URL || 'http://127.0.0.1:5180';
 const email = process.argv[2];
+const media = JSON.parse(await readFile('src/cloudinary-media.json', 'utf8'));
 const posts = Array.from({ length: 100 }, (_, index) => ({
   slug: `layout-blog-${index}`, title: `Layout article ${index}`, excerpt: 'Design and development insights.',
-  category: 'Design', body: 'Article content.', coverUrl: '/assets/images/blog/blog_ui_ux.webp',
+  category: 'Design', body: 'Article content.', coverUrl: media['/assets/images/blog/blog_ui_ux.webp'].url,
   status: 'published', publishedAt: { seconds: 1800000000 + index },
 }));
 const projects = Array.from({ length: 100 }, (_, index) => ({
@@ -17,8 +19,8 @@ const projects = Array.from({ length: 100 }, (_, index) => ({
   details: 'Project details.', industry: index % 2 ? 'Fashion' : 'Beauty',
   services: index % 3 ? ['Design'] : ['Development'], projectType: 'Website', deliverables: ['Design', 'Development'],
   featured: index < 6, sortOrder: index === 0 ? 10 : index, status: 'published',
-  coverUrl: `${base}/assets/images/section/cora-beauty-ecommerce-mockup.webp`,
-  galleryUrls: Array(3).fill('https://example.com/gallery.webp'), publishedAt: { seconds: 1800000000 + index },
+  coverUrl: media['/assets/images/section/cora-beauty-ecommerce-mockup.webp'].url,
+  galleryUrls: [1, 2, 3].map((index) => media[`/assets/images/section/cora-beauty-${index}.webp`].url), publishedAt: { seconds: 1800000000 + index },
 }));
 const content = { posts, projects };
 const builtInPosts = ['future-of-ui-ux', 'ai-automation-game-changer', 'scalable-web-platforms', 'brand-identity-that-scales', 'website-performance-design', 'motion-design-with-purpose'];
@@ -123,11 +125,7 @@ try {
     const token = await auth.createCustomToken(user.uid);
     await page.goto(`${base}/admin`);
     await expect(page.getByRole('heading', { name: 'Admin sign in' })).toBeVisible();
-    await page.evaluate(async (customToken) => {
-      const { auth } = await import('/src/lib/firebase.js');
-      const { signInWithCustomToken } = await import('/node_modules/.vite/deps/firebase_auth.js');
-      await signInWithCustomToken(auth, customToken);
-    }, token);
+    await signInAdminTest(page, { base, email, customToken: token });
     await expect(page.getByRole('heading', { name: 'Overview', exact: true })).toBeVisible();
     await page.locator('.admin-sidebar').getByRole('button', { name: /^Projects/ }).click();
     await expect(page.locator('.admin-table tbody tr')).toHaveCount(20);

@@ -17,7 +17,7 @@ function runWithoutRequireEsm(source) {
 test('all serverless APIs start without require(esm) and retain method/auth protection', () => {
   runWithoutRequireEsm(`
     import assert from 'node:assert/strict';
-    for (const name of ['admin-content', 'admin-comments', 'cloudinary-sign', 'content', 'comments']) {
+    for (const name of ['admin-content', 'admin-comments', 'admin-media', 'admin-users', 'cloudinary-sign', 'content', 'comments', 'contact']) {
       const { default: handler } = await import('./api/' + name + '.js');
       let status;
       let body;

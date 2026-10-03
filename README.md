@@ -13,10 +13,92 @@ The shared navbar lives in `src/components/Navbar.jsx`, so every page uses the s
 
 ## Content Admin
 
+### SMTP Contact And Password Resets
+
+Both contact forms submit to `/api/contact`; success is shown only after SMTP accepts
+the message and Firestore records confirmation. Attach up to two PDF/JPG/PNG/WebP
+files, totalling at most 2 MB. File signatures, input sizes, same-origin requests,
+honeypots, per-IP cooldown/hourly limits and persistent retry IDs are checked on the
+server. Visitors cannot set the destination or sender; their email becomes Reply-To.
+Messages and attachment metadata (not file contents) are stored in private
+`mailDeliveries`. `mailRateLimits` stores hashed identifiers, not raw IP addresses.
+Enable Firestore TTL on `expiresAt` for both collections (7 days / 1 day). TTL must
+be enabled in Firebase; merely including the field does not delete expired records.
+
+Users > Password reset > Send reset email sends a Firebase-generated HTTPS reset
+link via the same SMTP account. Manual link generation/copy remains available.
+Reset requests require a currently active admin and an active recipient account;
+they are rate-limited per recipient. Passwords are never included in reset emails.
+Blog previews disable the contact form to avoid accidental real submissions.
+
+Add these **server-only** variables to Vercel Production (and Preview if used):
+`SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASSWORD`,
+`SMTP_FROM_EMAIL`, `CONTACT_TO_EMAIL`. The verified current Namecheap cPanel host
+is `premium130-4.web-hosting.com`, port `465`, secure `true`. Actual credentials are
+in ignored local env files, never source code or `VITE_` variables. An optional
+`MAIL_RATE_LIMIT_SECRET` can replace the existing Cloudinary secret for IP hashing.
+Redeploy after setting variables and publish the updated `firestore.rules`.
+
+`npm run test:mail` tests both forms locally with intercepted mail responses; no
+real email is sent. With the local server on port 5180,
+`npm run test:mail -- <existing-admin-email> --live` additionally sends one contact
+test and one reset email to `CONTACT_TO_EMAIL`. It creates a temporary Firebase
+account only if that address is not already a user, never changes an existing
+password, and removes its own test account and delivery/rate records. SMTP
+acceptance is not proof of inbox delivery; check the recipient mailbox/spam folder.
+
 The public site remains React + Vite on Vercel. Firebase Authentication controls `/admin`,
 Firestore stores blog and project records, and Cloudinary stores uploaded images. The
 Vercel functions in `api/` sign admin uploads and serve published content without
 shipping the Firebase SDK to public pages.
+
+### Media Library And Users
+
+`/admin/media` lists the existing images under Cloudinary's `fanzcreative/` root,
+including blog, project and built-in site assets. Folder filters, server-side search,
+60-image batches, bulk image upload, full previews, dimensions, original-image links
+and copying URLs are available. Uploaded filenames are stored as signed contextual
+metadata. Images referenced by the built-in media map or any saved blog/project
+(including drafts and archived entries) cannot be deleted through the library.
+Deletion checks current saved references; unsaved editor selections are not references.
+Keep the current filter in mind: library uploads are stored in Site assets.
+
+The cover, all three project-gallery slots and article image blocks can reuse library
+images. Covers/gallery images with a different aspect ratio open the existing crop
+panel; cropping creates a new image and leaves the original intact. Inline images
+keep their original dimensions and do not require cropping.
+
+`/admin/users` manages Firebase Authentication accounts: create users/admins, edit
+name/email and roles, disable/re-enable accounts, generate password-reset links, and
+permanently delete other accounts. Initial passwords require 12-128 characters and
+are not saved in Firestore or returned by the API. Password resets can be emailed
+through the server's SMTP account or generated as a link for manual sharing.
+Generating a link alone does not send an email. Disabled accounts and removed admin roles
+are checked on every authenticated API request, including already-issued tokens.
+An administrator cannot delete, disable or demote their own account; the last active
+admin is protected. Account changes use a Firestore lock across serverless instances.
+Deleted accounts do not delete articles/projects.
+
+Both sections use the existing Firebase/Cloudinary environment variables. Redeploy
+Vercel to include `/api/admin-media` and `/api/admin-users`, and **publish the updated
+`firestore.rules` to Firebase**. Direct content writes and private reads are now
+server-only, preventing an older browser admin token from bypassing role removal.
+The `_adminOperations` lock collection is also denied to browser clients. Node
+serverless packaging explicitly includes the built-in media map for usage checks.
+
+With a local server at `http://127.0.0.1:5180`, run
+`npm run test:admin-tools -- <existing-admin-email>`. The real browser/API check uses
+only temporary QA accounts, a draft and generated test uploads; it verifies upload,
+library reuse/crop, authentication, reset links, role revocation, disabled sessions,
+deletion protection, mobile dialogs and cleanup. Set `ADMIN_TEST_URL` for another
+local port. This check currently requires a local Vite server for its isolated
+secondary-account login/reset SDK calls. Unit tests cover validation, credential
+privacy, access safeguards, account locking and image usage detection.
+The admin UI check also uses simulated 125-user/65-image lists to verify pagination,
+global media search, empty/error states, duplicate-email handling, retained edits
+after failed saves, library selection in inline images/all gallery slots, and
+320px/mobile layouts. These fixtures are intercepted in the test browser and are
+never added to Firebase or Cloudinary.
 
 1. In Firebase Authentication, enable Email/Password, create the intended admin user,
    and add `fanzcreative-nine.vercel.app` and any custom production domains as authorized domains.
@@ -62,6 +144,19 @@ npm run test:admin -- <admin-email>
 The browser admin check creates temporary QA blog/project records, verifies image
 crop/upload, publish, archive/restore, public-page links, and then removes its own
 test records and uploaded test images.
+
+The admin, block editor, comments, quote options, preview, slug, and UI browser
+checks also support deployed sites. Set `ADMIN_TEST_URL` to the deployed origin
+and supply `ADMIN_TEST_PASSWORD` only in the test process environment. Deployed
+checks use the actual email/password login form; localhost checks use custom tokens.
+Never commit the test password or put it in a `VITE_` variable. The local Firebase
+service account and Cloudinary credentials must point to the same deployed project
+so temporary records and uploaded test media can be cleaned up.
+
+For the 100-item layout check, set `LAYOUT_TEST_URL` instead. This check and the
+UI/slug/preview fixture checks use intercepted API fixtures, not 100 real database
+records. Core admin, block editor, comments, and quote checks do write temporary
+QA records, and may briefly publish them, before removing only their own test data.
 
 ### Serverless Runtime Compatibility
 

@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowUpRight, ChevronRight, FileText, FolderKanban, Layers, LayoutDashboard, LogOut, Menu, MessageSquare, X } from 'lucide-react';
+import { ArrowUpRight, ChevronRight, FileText, FolderKanban, Images, Layers, LayoutDashboard, LogOut, Menu, MessageSquare, UsersRound, X } from 'lucide-react';
 
-export default function AdminShell({ email, type, slug, isComments, content, commentCounts, onNavigate, onSignOut, children }) {
+export default function AdminShell({ email, type, slug, isComments, isMedia, isUsers, content, commentCounts, onNavigate, onSignOut, children }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const sidebar = useRef(null);
   const menuButton = useRef(null);
-  const section = isComments ? 'Comments' : type === 'posts' ? 'Blogs' : type === 'projects' ? 'Projects' : 'Overview';
+  const section = isComments ? 'Comments' : isMedia ? 'Media Library' : isUsers ? 'Users' : type === 'posts' ? 'Blogs' : type === 'projects' ? 'Projects' : 'Overview';
+  const isOverview = !type && !isComments && !isMedia && !isUsers;
   const navigate = (path) => { setMenuOpen(false); onNavigate(path); };
 
   useEffect(() => {
@@ -47,10 +48,12 @@ export default function AdminShell({ email, type, slug, isComments, content, com
       </div>
       <nav aria-label="Admin sections">
         <span className="admin-nav-label">WORKSPACE</span>
-        <button className={!type && !isComments ? 'active' : ''} aria-current={!type && !isComments ? 'page' : undefined} onClick={() => navigate('/admin')}><LayoutDashboard size={18} /> Overview</button>
+        <button className={isOverview ? 'active' : ''} aria-current={isOverview ? 'page' : undefined} onClick={() => navigate('/admin')}><LayoutDashboard size={18} /> Overview</button>
         <button className={type === 'posts' ? 'active' : ''} aria-current={type === 'posts' ? 'page' : undefined} onClick={() => navigate('/admin/posts')}><FileText size={18} /> Blogs <span className="admin-nav-count">{content.posts.length}</span></button>
         <button className={type === 'projects' ? 'active' : ''} aria-current={type === 'projects' ? 'page' : undefined} onClick={() => navigate('/admin/projects')}><FolderKanban size={18} /> Projects <span className="admin-nav-count">{content.projects.length}</span></button>
         <button className={isComments ? 'active' : ''} aria-current={isComments ? 'page' : undefined} onClick={() => navigate('/admin/comments')}><MessageSquare size={18} /> Comments {commentCounts && <span className="admin-nav-count">{commentCounts.pending}</span>}</button>
+        <button className={isMedia ? 'active' : ''} aria-current={isMedia ? 'page' : undefined} onClick={() => navigate('/admin/media')}><Images size={18} /> Media Library</button>
+        <button className={isUsers ? 'active' : ''} aria-current={isUsers ? 'page' : undefined} onClick={() => navigate('/admin/users')}><UsersRound size={18} /> Users</button>
       </nav>
       <div className="admin-sidebar-bottom">
         <a className="admin-site-link" href="/" target="_blank" rel="noreferrer"><ArrowUpRight size={17} /> View website</a>

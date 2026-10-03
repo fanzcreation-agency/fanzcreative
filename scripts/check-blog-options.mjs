@@ -5,6 +5,7 @@ import { getAuth } from 'firebase-admin/auth';
 import { deleteApp } from 'firebase-admin/app';
 import { getAdminApp, getAdminStore } from '../server/firebase-admin.js';
 import { DEFAULT_END_QUOTE } from '../shared/content.js';
+import { signInAdminTest } from './admin-test-login.mjs';
 
 process.loadEnvFile('.env.local');
 const email = process.argv[2];
@@ -51,11 +52,7 @@ try {
   await mkdir('scratch', { recursive: true });
   await admin.goto(`${base}/admin`);
   await expect(admin.getByRole('heading', { name: 'Admin sign in' })).toBeVisible();
-  await admin.evaluate(async (customToken) => {
-    const { auth } = await import('/src/lib/firebase.js');
-    const { signInWithCustomToken } = await import('/node_modules/.vite/deps/firebase_auth.js');
-    await signInWithCustomToken(auth, customToken);
-  }, token);
+  await signInAdminTest(admin, { base, email, customToken: token });
   await expect(admin.getByRole('heading', { name: 'Overview', exact: true })).toBeVisible();
   await admin.goto(`${base}/admin/posts/new`);
   await admin.getByLabel('Title', { exact: true }).fill(title);

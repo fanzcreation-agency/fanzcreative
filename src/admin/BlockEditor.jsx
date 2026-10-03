@@ -18,7 +18,7 @@ function InsertBlock({ position, disabled, onInsert }) {
   </details>;
 }
 
-export default function BlockEditor({ blocks, onChange, disabled, uploading, errors, onUpload, onPreview }) {
+export default function BlockEditor({ blocks, onChange, disabled, uploading, errors, onUpload, onLibrary, onPreview }) {
   const update = (id, data) => onChange(blocks.map((block) => block.id === id ? { ...block, ...data } : block));
   const insert = (position, type) => {
     const next = [...blocks];
@@ -65,6 +65,7 @@ export default function BlockEditor({ blocks, onChange, disabled, uploading, err
           {block.type === 'image' && <>
             {block.url && <img className="block-image-preview" src={block.url} alt={block.alt || ''} />}
             <label className="admin-btn secondary block-upload"><Upload size={16} /> {uploading === `block:${block.id}` ? 'Uploading...' : block.url ? 'Replace image' : 'Upload image'}<input aria-label={`Image ${index + 1} upload`} type="file" accept="image/jpeg,image/png,image/webp,image/avif" disabled={disabled} hidden onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ''; if (file) onUpload(block.id, file); }} /></label>
+            {onLibrary && <button type="button" className="admin-btn secondary" disabled={disabled} onClick={() => onLibrary(block.id)}><Image size={16} />Choose from library</button>}
             {errors?.[`block:${block.id}`] && <p className="admin-error" role="alert">{errors[`block:${block.id}`]}</p>}
             <input className="block-input" aria-label={`Image ${index + 1} URL`} placeholder="Image URL" value={block.url} disabled={disabled} onChange={(event) => update(block.id, { url: event.target.value, width: 0, height: 0 })} />
             <input className="block-input" aria-label={`Image ${index + 1} alt text`} placeholder="Alt text" value={block.alt} disabled={disabled} onChange={(event) => update(block.id, { alt: event.target.value })} />

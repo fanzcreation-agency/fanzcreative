@@ -4,6 +4,7 @@ import { chromium, expect as baseExpect } from '@playwright/test';
 import { getAuth } from 'firebase-admin/auth';
 import { deleteApp } from 'firebase-admin/app';
 import { getAdminApp } from '../server/firebase-admin.js';
+import { signInAdminTest } from './admin-test-login.mjs';
 
 process.loadEnvFile('.env.local');
 const email = process.argv[2];
@@ -40,11 +41,7 @@ try {
   await mkdir('scratch', { recursive: true });
   await page.goto(`${base}/admin`);
   await expect(page.getByRole('heading', { name: 'Admin sign in' })).toBeVisible();
-  await page.evaluate(async (customToken) => {
-    const { auth } = await import('/src/lib/firebase.js');
-    const { signInWithCustomToken } = await import('/node_modules/.vite/deps/firebase_auth.js');
-    await signInWithCustomToken(auth, customToken);
-  }, token);
+  await signInAdminTest(page, { base, email, customToken: token });
   await expect(page.getByRole('heading', { name: 'Overview', exact: true })).toBeVisible();
   await page.goto(`${base}/admin/posts/new`);
   await page.getByLabel('Title', { exact: true }).fill('Unsaved preview article');

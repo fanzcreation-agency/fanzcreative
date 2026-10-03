@@ -314,7 +314,7 @@ export function BlogArticle({ article, preview = false }) {
       </section>
       {/* /Blog With Sidebar */}
 
-      <Contact />
+      <Contact preview={preview} />
     </div>
   );
 }

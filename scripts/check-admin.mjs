@@ -6,6 +6,7 @@ import { getAuth } from 'firebase-admin/auth';
 import { deleteApp } from 'firebase-admin/app';
 import { v2 as cloudinary } from 'cloudinary';
 import { getAdminApp, getAdminStore } from '../server/firebase-admin.js';
+import { signInAdminTest } from './admin-test-login.mjs';
 
 const expect = baseExpect.configure({ timeout: 30000 });
 
@@ -69,11 +70,7 @@ try {
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('Sign-in failed', { timeout: 20000 });
   pass('invalid login shows an error without crashing');
-  await page.evaluate(async (customToken) => {
-    const { auth } = await import('/src/lib/firebase.js');
-    const { signInWithCustomToken } = await import('/node_modules/.vite/deps/firebase_auth.js');
-    await signInWithCustomToken(auth, customToken);
-  }, token);
+  const idToken = await signInAdminTest(page, { base, email, customToken: token });
   await expect(page.getByRole('heading', { name: 'Overview', exact: true })).toBeVisible({ timeout: 30000 });
   await expect(page.locator('.admin-recent > button').first()).toBeVisible({ timeout: 30000 });
   await page.screenshot({ path: 'scratch/admin-overview-desktop.png', fullPage: true });
@@ -81,7 +78,6 @@ try {
   assert.equal((await page.request.get(`${base}/api/admin-content`)).status(), 401);
   assert.equal((await page.request.post(`${base}/api/cloudinary-sign`, { data: {} })).status(), 401);
   assert.equal((await page.request.get(`${base}/api/admin-content`, { headers: { Authorization: 'Bearer invalid-token' } })).status(), 401);
-  const idToken = await page.evaluate(async () => (await import('/src/lib/firebase.js')).auth.currentUser.getIdToken());
   const adminApi = (method, data) => page.request.fetch(`${base}/api/admin-content`, {
     method, headers: { Authorization: `Bearer ${idToken}` }, data,
   });

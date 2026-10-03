@@ -6,6 +6,7 @@ import { getAuth } from 'firebase-admin/auth';
 import { deleteApp } from 'firebase-admin/app';
 import { v2 as cloudinary } from 'cloudinary';
 import { getAdminApp, getAdminStore } from '../server/firebase-admin.js';
+import { signInAdminTest } from './admin-test-login.mjs';
 
 process.loadEnvFile('.env.local');
 const email = process.argv[2];
@@ -62,11 +63,7 @@ try {
   await mkdir('scratch', { recursive: true });
   await page.goto(`${base}/admin`);
   await expect(page.getByRole('heading', { name: 'Admin sign in' })).toBeVisible();
-  await page.evaluate(async (customToken) => {
-    const { auth } = await import('/src/lib/firebase.js');
-    const { signInWithCustomToken } = await import('/node_modules/.vite/deps/firebase_auth.js');
-    await signInWithCustomToken(auth, customToken);
-  }, token);
+  const idToken = await signInAdminTest(page, { base, email, customToken: token });
   await expect(page.getByRole('heading', { name: 'Overview', exact: true })).toBeVisible();
   await page.goto(`${base}/admin/posts/new`);
   await field('Title').fill('QA block article');
@@ -146,7 +143,6 @@ try {
   assert.equal((await record('posts', renamedBlog)).data.slug, finalBlog);
   await publicPage.goto(`${base}/blog/single/${blogSlug}`);
   await expect(publicPage).toHaveURL(`${base}/blog/single/${finalBlog}`);
-  const idToken = await page.evaluate(async () => (await import('/src/lib/firebase.js')).auth.currentUser.getIdToken());
   const listing = await page.request.get(`${base}/api/admin-content`, { headers: { Authorization: `Bearer ${idToken}` } });
   const blogs = (await listing.json()).content.posts.filter((post) => post.slug.startsWith(blogSlug));
   assert.deepEqual(blogs.map((post) => post.slug), [finalBlog]);

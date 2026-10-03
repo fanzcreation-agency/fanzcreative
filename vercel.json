@@ -1,5 +1,16 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "api/admin-media.js": {
+      "includeFiles": "src/cloudinary-media.json"
+    },
+    "api/admin-users.js": {
+      "maxDuration": 60
+    },
+    "api/contact.js": {
+      "maxDuration": 60
+    }
+  },
   "rewrites": [
     {
       "source": "/((?!api/).*)",

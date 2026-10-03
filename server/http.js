@@ -13,7 +13,10 @@ export async function requireAdmin(request) {
   if (!token) throw new HttpError(401, 'Sign in required.');
   let claims;
   try {
-    claims = await getAuth(getAdminApp()).verifyIdToken(token);
+    const auth = getAuth(getAdminApp());
+    claims = await auth.verifyIdToken(token, true);
+    const user = await auth.getUser(claims.uid);
+    if (user.disabled || user.customClaims?.admin !== true) throw new HttpError(403, 'Admin access required.');
   } catch (error) {
     if (error.code?.startsWith('auth/')) throw new HttpError(401, 'Your session has expired. Sign in again.');
     throw error;

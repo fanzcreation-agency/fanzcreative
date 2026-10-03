@@ -14,6 +14,9 @@ import SitePreview from './SitePreview';
 import CommentsPanel from './CommentsPanel';
 import AdminShell from './AdminShell';
 import AdminOverview from './AdminOverview';
+import MediaLibrary from './MediaLibrary';
+import UsersPanel from './UsersPanel';
+import AdminDialog from './AdminDialog';
 import { articleBlocks, createBlock } from '../../shared/article-blocks';
 import { uploadImage, validateImageFile } from './mediaUpload';
 import './admin.css';
@@ -107,6 +110,7 @@ function ContentEditor({ type, item, items, onNavigate, onChanged }) {
   const [mediaErrors, setMediaErrors] = useState({});
   const [cropRequest, setCropRequest] = useState(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [libraryPick, setLibraryPick] = useState(null);
   const closePreview = useCallback(() => setPreviewOpen(false), []);
   const cropRef = useRef(null);
   const [error, setError] = useState('');
@@ -263,8 +267,39 @@ function ContentEditor({ type, item, items, onNavigate, onChanged }) {
     } finally { setUploading(null); }
   };
 
+  const selectLibraryImage = async (image) => {
+    const target = libraryPick;
+    setLibraryPick(null);
+    const url = image.url.replace('/image/upload/', '/image/upload/f_auto,q_auto/');
+    if (target.blockId) {
+      setForm((previous) => ({ ...previous, blocks: previous.blocks.map((block) => block.id === target.blockId ? { ...block, url, width: image.width, height: image.height } : block) }));
+      setNotice('Image selected. Save the item to keep it.');
+      return;
+    }
+    const galleryIndex = target.galleryIndex ?? null;
+    const slot = galleryIndex === null ? 'coverUrl' : `gallery${galleryIndex + 1}`;
+    const requirement = IMAGE_REQUIREMENTS[slot];
+    setMediaErrors((previous) => ({ ...previous, [slot]: '' }));
+    if (!imageRatioError(requirement, image.width, image.height)) {
+      if (galleryIndex === null) update('coverUrl')(url); else updateGallery(galleryIndex, url);
+      setNotice('Image selected. Save the item to keep it.');
+      return;
+    }
+    setUploading(slot);
+    try {
+      const response = await fetch(image.url.replace('/image/upload/', '/image/upload/c_limit,w_2400,h_2400,f_auto,q_auto/'), { signal: AbortSignal.timeout(30000) });
+      if (!response.ok) throw new Error('Could not open this image for cropping. Please try again.');
+      const blob = await response.blob();
+      const file = new File([blob], `${image.name}.${image.format}`, { type: blob.type });
+      const pending = { file, imageUrl: URL.createObjectURL(file), slot, field: galleryIndex === null ? 'coverUrl' : 'galleryUrls', galleryIndex, requirement };
+      cropRef.current = pending; setCropRequest(pending);
+    } catch (error) { setMediaErrors((previous) => ({ ...previous, [slot]: error.message })); }
+    finally { setUploading(null); }
+  };
+
   return (
     <div className="admin-editor-page">
+      {libraryPick && <AdminDialog title="Choose an image" onClose={() => setLibraryPick(null)} className="admin-picker-dialog"><MediaLibrary onSelect={selectLibraryImage} /></AdminDialog>}
       {previewOpen && <SitePreview article={form} onClose={closePreview} />}
       {cropRequest && <CropDialog {...cropRequest} onCancel={closeCrop} onConfirm={(croppedFile) => {
         const { slot, field, galleryIndex } = cropRequest;
@@ -292,7 +327,7 @@ function ContentEditor({ type, item, items, onNavigate, onChanged }) {
                 <>
                   <Field label="Excerpt" value={form.excerpt} onChange={update('excerpt')} multiline rows={3} />
                   <Field label="Category" value={form.category} onChange={update('category')} />
-                  <BlockEditor blocks={form.blocks} onChange={update('blocks')} disabled={saving || !!uploading || !!cropRequest} uploading={uploading} errors={mediaErrors} onUpload={uploadBlock} onPreview={() => setPreviewOpen(true)} />
+                  <BlockEditor blocks={form.blocks} onChange={update('blocks')} disabled={saving || !!uploading || !!cropRequest} uploading={uploading} errors={mediaErrors} onUpload={uploadBlock} onLibrary={(blockId) => setLibraryPick({ blockId })} onPreview={() => setPreviewOpen(true)} />
                   <fieldset className="admin-end-quote">
                     <legend>End quote</legend>
                     <div className="admin-quote-options">
@@ -336,6 +371,7 @@ function ContentEditor({ type, item, items, onNavigate, onChanged }) {
             <h3>Featured image <span className="admin-optional">Optional</span></h3>
               <p className="admin-help">16:9 ratio, for example 1600 x 900</p>
               <div className="admin-media-row"><h3>Cover image</h3><label className="admin-btn secondary"><Upload size={16} /> {uploading === 'coverUrl' ? 'Uploading...' : 'Upload image'}<input type="file" accept="image/jpeg,image/png,image/webp,image/avif" disabled={saving || !!uploading || !!cropRequest} onChange={(event) => upload(event, 'coverUrl')} hidden /></label></div>
+              <button type="button" className="admin-btn secondary" disabled={saving || !!uploading || !!cropRequest} onClick={() => setLibraryPick({})}><ImageIcon size={15} />Choose from library</button>
               {mediaErrors.coverUrl && <p className="admin-error" role="alert">{mediaErrors.coverUrl}</p>}
               <Field label="Cover URL" value={form.coverUrl} onChange={update('coverUrl')} disabled={saving || !!uploading || !!cropRequest} />
               {form.coverUrl && <><img className="admin-image-preview" src={form.coverUrl} alt="Cover preview" /><button className="admin-archive" disabled={saving || !!uploading} onClick={() => update('coverUrl')('')}><X size={15} /> Remove image</button></>}
@@ -349,6 +385,7 @@ function ContentEditor({ type, item, items, onNavigate, onChanged }) {
                 <div className="admin-gallery-slot-heading"><div><strong>Image {index + 1}</strong><small>{requirement.width}:{requirement.height} ratio · {requirement.example}</small></div>{gallery[index] && <button type="button" title={`Remove image ${index + 1}`} disabled={saving || !!uploading || !!cropRequest} onClick={() => updateGallery(index, '')}><X size={16} /></button>}</div>
                 {gallery[index] ? <img className="admin-image-preview" src={gallery[index]} alt={`Gallery ${index + 1} preview`} /> : <div className="admin-image-empty"><ImageIcon size={22} /></div>}
                 <label className="admin-btn secondary"><Upload size={15} /> {uploading === slot ? 'Uploading...' : gallery[index] ? 'Replace image' : 'Upload image'}<input type="file" accept="image/jpeg,image/png,image/webp,image/avif" disabled={saving || !!uploading || !!cropRequest} onChange={(event) => upload(event, 'galleryUrls', index)} hidden /></label>
+                <button type="button" className="admin-btn secondary" disabled={saving || !!uploading || !!cropRequest} onClick={() => setLibraryPick({ galleryIndex: index })}><ImageIcon size={15} />Choose from library</button>
                 {mediaErrors[slot] && <p className="admin-error" role="alert">{mediaErrors[slot]}</p>}
               </div>;
             })}
@@ -388,12 +425,14 @@ function ContentList({ type, items, loading, error, onNavigate, onRefresh }) {
   );
 }
 
-function AdminDashboard({ email }) {
+function AdminDashboard({ email, uid }) {
   const navigate = useNavigate();
   const location = useLocation();
   const segments = location.pathname.split('/').filter(Boolean);
   const type = ['posts', 'projects'].includes(segments[1]) ? segments[1] : null;
   const isComments = segments[1] === 'comments';
+  const isMedia = segments[1] === 'media';
+  const isUsers = segments[1] === 'users';
   const slug = type ? segments[2] : null;
   const [content, setContent] = useState({ posts: [], projects: [] });
   const [loading, setLoading] = useState({ posts: true, projects: true });
@@ -445,9 +484,11 @@ function AdminDashboard({ email }) {
   const selectedItem = slug && slug !== 'new' ? content[type].find((item) => item.slug === slug) : null;
 
   return (
-    <AdminShell email={email} type={type} slug={slug} isComments={isComments} content={content} commentCounts={commentCounts} onNavigate={navigate} onSignOut={() => signOut(auth)}>
+    <AdminShell email={email} type={type} slug={slug} isComments={isComments} isMedia={isMedia} isUsers={isUsers} content={content} commentCounts={commentCounts} onNavigate={navigate} onSignOut={() => signOut(auth)}>
         {isComments && <CommentsPanel posts={content.posts} onCountsChanged={setCommentCounts} />}
-        {!type && !isComments && <AdminOverview content={content} loading={loading} errors={errors} commentCounts={commentCounts} onNavigate={navigate} onRefresh={() => loadContent()} />}
+        {isMedia && <MediaLibrary />}
+        {isUsers && <UsersPanel currentUid={uid} />}
+        {!type && !isComments && !isMedia && !isUsers && <AdminOverview content={content} loading={loading} errors={errors} commentCounts={commentCounts} onNavigate={navigate} onRefresh={() => loadContent()} />}
         {type && !slug && <ContentList key={type} type={type} items={content[type]} loading={loading[type]} error={errors[type]} onNavigate={navigate} onRefresh={() => loadContent()} />}
         {type && slug && (slug === 'new' || selectedItem ? <ContentEditor key={`${type}:${slug}`} type={type} item={selectedItem} items={content[type]} onNavigate={navigate} onChanged={contentChanged} /> : <div className="admin-content-page">{errors[type] && <p className="admin-error" role="alert">{errors[type]}</p>}<p className="admin-muted">{loading[type] ? 'Loading content...' : 'Content not found.'}</p><button className="admin-btn secondary" onClick={() => navigate(`/admin/${type}`)}>Back to list</button></div>)}
     </AdminShell>
@@ -482,7 +523,7 @@ function AdminApp() {
   if (session.state === 'denied') {
     return <main className="admin-root admin-denied"><h1>Access denied</h1><p>This account does not have admin access.</p><button className="admin-btn secondary" onClick={() => signOut(auth)}>Sign out</button></main>;
   }
-  return <AdminDashboard email={session.user.email} />;
+  return <AdminDashboard email={session.user.email} uid={session.user.uid} />;
 }
 
 export default AdminApp;

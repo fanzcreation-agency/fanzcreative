@@ -5,6 +5,7 @@ import { getAuth } from 'firebase-admin/auth';
 import { deleteApp } from 'firebase-admin/app';
 import { getAdminApp } from '../server/firebase-admin.js';
 import { prepareContent } from '../shared/content.js';
+import { signInAdminTest } from './admin-test-login.mjs';
 
 process.loadEnvFile('.env.local');
 const email = process.argv[2];
@@ -46,6 +47,36 @@ await context.route('**/api/admin-comments*', async (route) => {
 });
 await context.route('**/api/cloudinary-sign', (route) => route.fulfill({ json: { cloudName: 'ui-test', apiKey: 'ui-test', signature: 'ui-test', publicId: 'ui-test', folder: 'ui-test', timestamp: 1 } }));
 await context.route('https://api.cloudinary.com/v1_1/ui-test/image/upload', (route) => route.fulfill({ json: { secure_url: blogImages[0] } }));
+const people = Array.from({ length: 125 }, (_, index) => ({ uid: index === 0 ? user.uid : `mock-user-${index}`, email: index === 0 ? email : `member${index}@example.com`, displayName: `Member ${index}`, admin: index % 3 === 0, disabled: index % 10 === 9, lastSignIn: null }));
+const library = Array.from({ length: 65 }, (_, index) => ({ id: `mock-image-${index}`, publicId: `fanzcreative/blog/mock-image-${index}`, url: blogImages[index % blogImages.length], name: `Library image ${index}`, width: [1600, 1200, 600, 800][index % 4], height: [900, 800, 800, 1000][index % 4], bytes: 10000, format: 'webp', folder: 'fanzcreative/blog', createdAt: '2026-10-01T00:00:00Z' }));
+let failMediaLoad = true;
+let failUserSave = true;
+let failResetEmail = true;
+const resetEmails = [];
+await context.route('**/api/admin-media*', async (route) => {
+  const query = new URL(route.request().url()).searchParams;
+  if (query.has('publicId')) return route.fulfill({ json: { item: library[0], usage: [] } });
+  if (failMediaLoad) { failMediaLoad = false; return route.fulfill({ status: 503, json: { error: 'Temporary media failure.' } }); }
+  const matching = library.filter((item) => !query.get('q') || item.name.toLowerCase().includes(query.get('q').toLowerCase()));
+  const offset = Number(query.get('cursor') || 0);
+  return route.fulfill({ json: { items: matching.slice(offset, offset + 60), nextCursor: matching.length > offset + 60 ? String(offset + 60) : null } });
+});
+await context.route('**/api/admin-users*', async (route) => {
+  if (route.request().method() === 'POST') return route.fulfill({ status: 409, json: { error: 'An account with this email already exists.' } });
+  if (route.request().method() === 'PATCH') {
+    const body = route.request().postDataJSON();
+    if (body.action === 'send-password-reset') {
+      resetEmails.push(body);
+      if (failResetEmail) { failResetEmail = false; return route.fulfill({ status: 503, json: { error: 'Temporary email failure.' } }); }
+      return route.fulfill({ json: { emailSent: true, email: people.find((entry) => entry.uid === body.uid).email } });
+    }
+    if (failUserSave) { failUserSave = false; return route.fulfill({ status: 503, json: { error: 'Temporary user save failure.' } }); }
+    const item = people.find((entry) => entry.uid === body.uid); Object.assign(item, body.data);
+    return route.fulfill({ json: { item } });
+  }
+  const offset = Number(new URL(route.request().url()).searchParams.get('cursor') || 0);
+  return route.fulfill({ json: { items: people.slice(offset, offset + 100), nextCursor: offset + 100 < people.length ? String(offset + 100) : null } });
+});
 const page = await context.newPage();
 const errors = [];
 page.on('pageerror', (error) => errors.push(error.message));
@@ -61,11 +92,7 @@ try {
   await page.goto(`${base}/admin`);
   await expect(page.getByRole('heading', { name: 'Admin sign in' })).toBeVisible();
   await shot('login');
-  await page.evaluate(async (customToken) => {
-    const { auth } = await import('/src/lib/firebase.js');
-    const { signInWithCustomToken } = await import('/node_modules/.vite/deps/firebase_auth.js');
-    await signInWithCustomToken(auth, customToken);
-  }, token);
+  await signInAdminTest(page, { base, email, customToken: token });
   await expect(page.getByRole('heading', { name: 'Overview', exact: true })).toBeVisible();
   await expect(page.locator('.admin-recent > button')).toHaveCount(7);
   await expect(page.locator('.admin-stat.blogs strong')).toHaveText('28');
@@ -122,12 +149,78 @@ try {
   const preview = page.frameLocator('iframe[title="Article website preview"]');
   await expect(preview.locator('.blog-single-wrap > .title')).toHaveText('Designing a Website That Builds Trust');
   await expect(preview.locator('.blockquote-wrap h5')).toContainText('Good design makes complex things feel simple.');
+  await expect(preview.getByRole('button', { name: 'Submit Message', exact: true })).toBeDisabled();
   await page.getByRole('button', { name: 'Close preview', exact: true }).click();
   await page.goto(`${base}/admin/projects/project-1`);
   await expect(page.getByRole('img', { name: 'Gallery 3 preview', exact: true })).toBeVisible();
   await page.evaluate(() => globalThis.scrollTo(0, 0));
   await shot('project-editor');
   console.log('PASS block insertion, draft save/reload, quote controls, full-site preview and project gallery');
+
+  await nav('Media Library');
+  await expect(page.getByRole('alert')).toContainText('Temporary media failure');
+  await page.getByRole('button', { name: 'Refresh media' }).click();
+  await expect(page.locator('.admin-media-tile')).toHaveCount(60);
+  await page.getByRole('button', { name: 'Load more', exact: true }).click();
+  await expect(page.locator('.admin-media-tile')).toHaveCount(65);
+  await page.getByLabel('Search media').fill('Library image 64');
+  await page.getByLabel('Search media').press('Enter');
+  await expect(page.locator('.admin-media-tile')).toHaveCount(1);
+  await page.getByLabel('Search media').fill('no such image');
+  await page.getByLabel('Search media').press('Enter');
+  await expect(page.getByRole('heading', { name: 'No matching images' })).toBeVisible();
+  await nav('Users');
+  await expect(page.locator('[data-user-id]')).toHaveCount(20);
+  await page.getByRole('button', { name: 'Next users page' }).click();
+  await expect(page.locator('[data-user-id]')).toHaveCount(20);
+  await page.getByRole('button', { name: 'Load more users' }).click();
+  await expect(page.locator('.admin-heading-count')).toHaveText('125');
+  await page.getByLabel('Search users').fill('member124@');
+  await expect(page.locator('[data-user-id]')).toHaveCount(1);
+  await page.getByRole('button', { name: 'Add user', exact: true }).click();
+  await page.getByLabel('Full name', { exact: true }).fill('Duplicate member');
+  await page.getByLabel('Email address', { exact: true }).fill(email);
+  await page.getByRole('button', { name: 'Generate password' }).click();
+  await page.getByRole('button', { name: 'Create user', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('already exists');
+  await expect(page.getByLabel('Full name', { exact: true })).toHaveValue('Duplicate member');
+  await page.keyboard.press('Escape');
+  await page.getByLabel('Search users').fill('member1@example.com');
+  await page.getByRole('button', { name: 'Edit member1@example.com' }).click();
+  await page.getByLabel('Full name', { exact: true }).fill('Retained after failure');
+  await page.getByRole('button', { name: 'Save changes', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('Temporary user save failure');
+  await expect(page.getByLabel('Full name', { exact: true })).toHaveValue('Retained after failure');
+  await page.getByRole('button', { name: 'Save changes', exact: true }).click();
+  await expect(page.locator('[data-user-id]')).toContainText('Retained after failure');
+  await page.getByRole('button', { name: 'Reset password for member1@example.com', exact: true }).click();
+  await page.getByRole('button', { name: 'Send reset email', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('Temporary email failure');
+  await page.getByRole('button', { name: 'Send reset email', exact: true }).click();
+  await expect(page.locator('.admin-notice')).toContainText('Password-reset email sent to member1@example.com');
+  assert.equal(resetEmails[0].submissionId, resetEmails[1].submissionId);
+  await expect(page.locator('[data-user-id]')).toHaveCount(1);
+  console.log('PASS reset email failure/retry retains the request ID and user row');
+  console.log('PASS simulated 125-user/65-image pagination, search/empty states, duplicate email, failure/retry without lost edits');
+
+  await page.goto(`${base}/admin/posts/designing-a-website-that-builds-trust`);
+  await page.locator('.block-inserter').last().locator('summary').click();
+  await page.locator('.block-inserter').last().getByRole('button', { name: 'Image', exact: true }).click();
+  await page.locator('[data-block-type="image"]').getByRole('button', { name: 'Choose from library' }).click();
+  await page.locator('.admin-media-tile').first().click();
+  await expect(page.locator('[data-block-type="image"] .block-image-preview')).toBeVisible();
+  await page.getByRole('button', { name: 'Save draft', exact: true }).click();
+  await expect(page.locator('.admin-notice')).toContainText('Draft saved');
+  await page.reload();
+  await expect(page.locator('[data-block-type="image"] .block-image-preview')).toBeVisible();
+  await page.goto(`${base}/admin/projects/project-1`);
+  for (let index = 0; index < 3; index++) {
+    await page.locator('.admin-gallery-slot').nth(index).getByRole('button', { name: 'Choose from library' }).click();
+    await page.locator('.admin-media-tile').nth(index + 1).click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(page.getByRole('img', { name: `Gallery ${index + 1} preview`, exact: true })).toBeVisible();
+  }
+  console.log('PASS inline article image and all three gallery slots reuse library images');
 
   for (const width of [1024, 768, 390, 320]) {
     await page.setViewportSize({ width, height: 844 });
@@ -138,6 +231,12 @@ try {
     await noOverflow();
     if (width === 390) await shot('blogs-mobile');
     await nav('Comments');
+    await noOverflow();
+    await nav('Media Library');
+    await expect(page.locator('.admin-media-tile').first()).toBeVisible();
+    await noOverflow();
+    await nav('Users');
+    await expect(page.locator('[data-user-id]').first()).toBeVisible();
     await noOverflow();
     await page.goto(`${base}/admin/posts/designing-a-website-that-builds-trust`);
     await expect(page.getByLabel('Title', { exact: true })).toBeVisible();
@@ -162,7 +261,7 @@ try {
     const ctx = canvas.getContext('2d'); ctx.fillStyle = '#71a6f5'; ctx.fillRect(0, 0, 800, 800);
     return canvas.toDataURL('image/png').split(',')[1];
   });
-  await page.locator('input[type=file]').first().setInputFiles({ name: 'ui-crop.png', mimeType: 'image/png', buffer: Buffer.from(square, 'base64') });
+  await page.locator('.admin-editor-side input[type=file]').first().setInputFiles({ name: 'ui-crop.png', mimeType: 'image/png', buffer: Buffer.from(square, 'base64') });
   const crop = page.locator('.admin-crop-dialog');
   await expect(crop).toBeVisible();
   const bounds = await crop.boundingBox();

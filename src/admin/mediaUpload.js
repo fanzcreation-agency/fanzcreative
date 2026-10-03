@@ -11,7 +11,7 @@ export function validateImageFile(file) {
 export async function uploadImage(file, type, slug) {
   validateImageFile(file);
   const params = await adminRequest('/api/cloudinary-sign', {
-    method: 'POST', body: JSON.stringify({ kind: type === 'posts' ? 'blog' : 'project', slug, resourceType: 'image' }),
+    method: 'POST', body: JSON.stringify({ kind: type === 'posts' ? 'blog' : type === 'projects' ? 'project' : 'asset', slug, resourceType: 'image', fileName: file.name }),
   });
   if (!params.cloudName || !params.apiKey || !params.signature || !params.publicId || !params.folder || !params.timestamp) {
     throw new Error('Image upload service returned incomplete authorization. Please try again.');
@@ -23,6 +23,7 @@ export async function uploadImage(file, type, slug) {
   form.append('folder', params.folder);
   form.append('public_id', params.publicId);
   form.append('signature', params.signature);
+  if (params.context) form.append('context', params.context);
   const result = await requestJson(`https://api.cloudinary.com/v1_1/${params.cloudName}/image/upload`, {
     method: 'POST', body: form, timeoutMs: 120000,
   });

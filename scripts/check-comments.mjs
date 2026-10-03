@@ -7,6 +7,7 @@ import { deleteApp } from 'firebase-admin/app';
 import { Timestamp } from 'firebase-admin/firestore';
 import { getAdminApp, getAdminStore } from '../server/firebase-admin.js';
 import { prepareContent } from '../shared/content.js';
+import { signInAdminTest } from './admin-test-login.mjs';
 
 process.loadEnvFile('.env.local');
 const email = process.argv[2];
@@ -31,6 +32,10 @@ const reference = store.collection('posts').doc(slug);
 const rateKey = createHmac('sha256', process.env.COMMENT_RATE_LIMIT_SECRET || process.env.CLOUDINARY_API_SECRET).update('127.0.0.1').digest('hex');
 const rateRef = store.collection('commentRateLimits').doc(rateKey);
 const initialRate = await rateRef.get();
+const deployed = !['localhost', '127.0.0.1', '[::1]'].includes(new URL(base).hostname);
+const initialRates = deployed
+  ? new Map((await store.collection('commentRateLimits').get()).docs.map((entry) => [entry.id, entry.data()]))
+  : new Map();
 const ownedIds = new Set();
 const fingerprints = new Set();
 const errors = [];
@@ -48,7 +53,14 @@ const publicData = async (currentSlug = slug) => {
   const response = await page.request.get(`${base}/api/comments?slug=${currentSlug}`);
   return { status: response.status(), data: await response.json() };
 };
-const publishChanges = async () => admin.evaluate(async () => (await import('/src/lib/content-events.js')).notifyContentChanged('posts'));
+const publishChanges = async () => {
+  if (!deployed) return admin.evaluate(async () => (await import('/src/lib/content-events.js')).notifyContentChanged('posts'));
+  await admin.evaluate(() => {
+    const detail = { type: 'posts', time: Date.now() };
+    globalThis.localStorage.setItem('fanz-content-updated:posts', JSON.stringify(detail));
+    globalThis.dispatchEvent(new CustomEvent('fanz-content-updated', { detail }));
+  });
+};
 const waitComments = (count) => expect(page.locator('.blog-comment')).toHaveCount(count);
 let headers;
 let acceptedPayload;
@@ -59,13 +71,8 @@ try {
   await mkdir('scratch', { recursive: true });
   await admin.goto(`${base}/admin`);
   await expect(admin.getByRole('heading', { name: 'Admin sign in' })).toBeVisible();
-  await admin.evaluate(async (customToken) => {
-    const { auth } = await import('/src/lib/firebase.js');
-    const { signInWithCustomToken } = await import('/node_modules/.vite/deps/firebase_auth.js');
-    await signInWithCustomToken(auth, customToken);
-  }, token);
+  const idToken = await signInAdminTest(admin, { base, email, customToken: token });
   await expect(admin.getByRole('heading', { name: 'Overview', exact: true })).toBeVisible();
-  const idToken = await admin.evaluate(async () => (await import('/src/lib/firebase.js')).auth.currentUser.getIdToken());
   headers = { Authorization: `Bearer ${idToken}` };
   assert.equal((await page.request.get(`${base}/api/admin-comments`)).status(), 401);
   assert.equal((await page.request.get(`${base}/api/admin-comments`, { headers: { Authorization: 'Bearer invalid-token' } })).status(), 401);
@@ -120,7 +127,7 @@ try {
   assert.equal((await records()).length, 1);
   const throttled = await page.request.post(`${base}/api/comments`, { headers: { Origin: base, 'X-Forwarded-For': '8.8.8.8' }, data: { ...acceptedPayload, message: 'Another comment immediately.', submissionId: randomUUID() } });
   assert.equal(throttled.status(), 429);
-  console.log('PASS submission, pending privacy, failure/retry preservation, idempotency and non-spoofable local rate protection');
+  console.log('PASS submission, pending privacy, failure/retry preservation, idempotency and non-spoofable rate protection');
 
   await admin.goto(`${base}/admin/comments`);
   await admin.getByLabel('Search comments').fill(String(stamp));
@@ -238,13 +245,19 @@ try {
     await records();
     for (const id of ownedIds) await store.collection('comments').doc(id).delete();
     for (const fingerprint of fingerprints) await store.collection('commentDuplicates').doc(fingerprint).delete();
-    await store.runTransaction(async (transaction) => {
-      const current = await transaction.get(rateRef);
-      if (current.exists && ownedIds.has(current.get('lastCommentId'))) {
-        if (initialRate.exists) transaction.set(rateRef, initialRate.data());
-        else transaction.delete(rateRef);
-      }
-    });
+    const rateRecords = deployed
+      ? (await store.collection('commentRateLimits').get()).docs.filter((entry) => ownedIds.has(entry.get('lastCommentId')))
+      : [initialRate];
+    for (const entry of rateRecords) {
+      await store.runTransaction(async (transaction) => {
+        const current = await transaction.get(entry.ref);
+        if (current.exists && ownedIds.has(current.get('lastCommentId'))) {
+          const original = deployed ? initialRates.get(entry.id) : initialRate.exists ? initialRate.data() : undefined;
+          if (original) transaction.set(entry.ref, original);
+          else transaction.delete(entry.ref);
+        }
+      });
+    }
     for (const item of [slug, renamed]) await store.collection('posts').doc(item).delete();
     console.log('Temporary QA article, comments, aliases and owned abuse-protection records cleaned up.');
   } finally { await browser.close(); await deleteApp(app); }

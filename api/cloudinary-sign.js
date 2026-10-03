@@ -21,7 +21,7 @@ export default async function handler(request, response) {
       throw new HttpError(503, 'Image upload is not configured on the server.');
     }
 
-    const { kind, slug, resourceType = 'image' } = request.body || {};
+    const { kind, slug, resourceType = 'image', fileName } = request.body || {};
     if (!['blog', 'project', 'asset'].includes(kind) || !['image', 'video'].includes(resourceType)) {
       return response.status(400).json({ error: 'Invalid upload type' });
     }
@@ -36,8 +36,10 @@ export default async function handler(request, response) {
         : 'fanzcreative/assets';
     const timestamp = Math.floor(Date.now() / 1000);
     const publicId = randomUUID();
+    const caption = typeof fileName === 'string' ? fileName.replace(/[\\|=]/g, ' ').trim().slice(0, 200) : '';
+    const context = caption ? `caption=${caption}` : undefined;
     const signature = cloudinary.utils.api_sign_request(
-      { timestamp, folder, public_id: publicId },
+      { timestamp, folder, public_id: publicId, ...(context ? { context } : {}) },
       config.api_secret,
     );
 
@@ -48,6 +50,7 @@ export default async function handler(request, response) {
       folder,
       publicId,
       signature,
+      ...(context ? { context } : {}),
       resourceType,
     });
   } catch (error) {

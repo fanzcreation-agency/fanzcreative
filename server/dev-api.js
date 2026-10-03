@@ -3,6 +3,9 @@ import publicContent from '../api/content.js';
 import cloudinarySign from '../api/cloudinary-sign.js';
 import comments from '../api/comments.js';
 import adminComments from '../api/admin-comments.js';
+import adminMedia from '../api/admin-media.js';
+import adminUsers from '../api/admin-users.js';
+import contact from '../api/contact.js';
 
 const handlers = {
   '/api/admin-content': adminContent,
@@ -10,6 +13,9 @@ const handlers = {
   '/api/cloudinary-sign': cloudinarySign,
   '/api/comments': comments,
   '/api/admin-comments': adminComments,
+  '/api/admin-media': adminMedia,
+  '/api/admin-users': adminUsers,
+  '/api/contact': contact,
 };
 
 export function apiMiddleware(request, response, next) {
@@ -30,7 +36,7 @@ export function apiMiddleware(request, response, next) {
       let size = 0;
       for await (const chunk of request) {
         size += chunk.length;
-        if (size > 512 * 1024) return response.status(413).json({ error: 'Request is too large.' });
+        if (size > (url.pathname === '/api/contact' ? 3 * 1024 * 1024 : 512 * 1024)) return response.status(413).json({ error: 'Request is too large.' });
         chunks.push(chunk);
       }
       const raw = Buffer.concat(chunks).toString('utf8');
