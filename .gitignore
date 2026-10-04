@@ -75,3 +75,6 @@ firebase-service-account*.json
 
 # Local Vercel project settings and build cache
 .vercel/
+
+# Deployment keys
+deploy_key*
