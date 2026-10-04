@@ -29,14 +29,13 @@ jobs:
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
         run: npm run build
 
-      - name: Deploy to Namecheap public_html (SSH / SFTP)
-        uses: easingthemes/ssh-deploy@v5.1.0
+      - name: Setup SSH Key
+        uses: webfactory/ssh-agent@v0.9.0
         with:
-          SSH_PRIVATE_KEY: ${{ secrets.NAMECHEAP_SSH_KEY }}
-          ARGS: "-rlgoDzvc -i --delete"
-          SOURCE: "dist/"
-          REMOTE_HOST: ${{ secrets.NAMECHEAP_HOST }}
-          REMOTE_USER: ${{ secrets.CPANEL_USERNAME }}
-          REMOTE_PORT: "21098"
-          TARGET: "/home/${{ secrets.CPANEL_USERNAME }}/public_html"
-          EXCLUDE: "/.git*, /node_modules/"
+          ssh-private-key: ${{ secrets.NAMECHEAP_SSH_KEY }}
+
+      - name: Deploy to Namecheap public_html
+        run: |
+          rsync -avz --delete \
+            -e "ssh -p 21098 -o StrictHostKeyChecking=no" \
+            ./dist/ ${{ secrets.CPANEL_USERNAME }}@${{ secrets.NAMECHEAP_HOST }}:/home/${{ secrets.CPANEL_USERNAME }}/public_html/
