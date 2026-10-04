@@ -1,7 +1,6 @@
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { readFileSync } from 'node:fs';
-import { apiMiddleware } from './server/dev-api.js';
 
 const cloudinaryMedia = JSON.parse(readFileSync(new URL('./src/cloudinary-media.json', import.meta.url)));
 
@@ -37,8 +36,14 @@ export default defineConfig(({ mode }) => {
   return {
   plugins: [cloudinaryMediaPlugin(), react(), {
     name: 'local-content-api',
-    configureServer(server) { server.middlewares.use(apiMiddleware); },
-    configurePreviewServer(server) { server.middlewares.use(apiMiddleware); },
+    async configureServer(server) {
+      const { apiMiddleware } = await import('./server/dev-api.js');
+      server.middlewares.use(apiMiddleware);
+    },
+    async configurePreviewServer(server) {
+      const { apiMiddleware } = await import('./server/dev-api.js');
+      server.middlewares.use(apiMiddleware);
+    },
   }],
   // public/ is already the default; explicit for clarity
   publicDir: 'public',
