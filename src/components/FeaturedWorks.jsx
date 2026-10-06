@@ -245,6 +245,7 @@ function FeaturedWorks() {
           object-fit: cover;
           object-position: center top;
           transition: object-position 2s ease;
+          transform: none !important;
         }
         .sticky-works-card .featured-works-item .image:hover img {
           object-position: center bottom;
